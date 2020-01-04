@@ -24,12 +24,12 @@ namespace SFMLTest
 
     class MySFMLProgram
     {
+        RenderTexture rs;
         RenderWindow window;
         Font font;
         RayCaster caster;
 
         Vector2i screen = new Vector2i(100,75);
-        Vector2f pixel;
 
         float fov = 90;
         float distanceProjectionPlane;
@@ -62,7 +62,7 @@ namespace SFMLTest
             {
                 float rayAngle = AtanD((x - screen.X / 2.0f) / distanceProjectionPlane);
                 RayResult ray = caster.RayCast(player, angle + rayAngle);
-                float lineHeightHalf = ((caster.CellSize / (ray.Magnitude * CosD(rayAngle))) * distanceProjectionPlane)/2;
+                int lineHeightHalf = Round((caster.CellSize / (ray.Magnitude * CosD(rayAngle))) * distanceProjectionPlane)/2;
                 Color color = Color.Black;
                 switch (ray.Side)
                 {
@@ -78,44 +78,34 @@ namespace SFMLTest
 
                 vertices.Add(new Vertex
                     {
-                        Position = new Vector2f(x * pixel.X, Round(screen.Y / 2 - lineHeightHalf) * pixel.Y),
+                        Position = new Vector2f(x , Round(screen.Y / 2 - lineHeightHalf) ),
                         Color = color
                     });
                 vertices.Add(new Vertex
                 {
-                    Position = new Vector2f((x + 1) * pixel.X, Round(screen.Y / 2 - lineHeightHalf) * pixel.Y),
-                    Color = color
-                });
-                vertices.Add(new Vertex
-                {
-                    Position = new Vector2f((x + 1) * pixel.X, Round(screen.Y / 2 + lineHeightHalf) * pixel.Y),
-                    Color = color
-                });
-                vertices.Add(new Vertex
-                {
-                    Position = new Vector2f(x * pixel.X, Round(screen.Y / 2 + lineHeightHalf) * pixel.Y),
+                    Position = new Vector2f(x , Round(screen.Y / 2 + lineHeightHalf)),
                     Color = color
                 });
             }
 
-            window.Draw(vertices.ToArray(), 0, (uint)vertices.Count, PrimitiveType.Quads);
+            rs.Draw(vertices.ToArray(), 0, (uint)vertices.Count, PrimitiveType.Lines);
         }
 
         public void StartSFMLProgram()
         {
-            #region Inicialization
+            #region Inicialization      
             bool[,] Map = new bool[_m.GetLength(0), _m.GetLength(1)];
 
-            for (int x = 0; x < _m.GetLength(0); x++)
-                for (int y = 0; y < _m.GetLength(1); y++)
-                    Map[x, y] = _m[x, y] == 0 ? false : true;
+            for (int y = 0; y < _m.GetLength(1); y++)
+                for (int x = 0; x < _m.GetLength(0); x++)
+                    Map[x, y] = _m[y,x] == 0 ? false : true;
 
             window = new RenderWindow(new VideoMode(800, 600), "SFML window");
             window.SetVisible(true);
             window.Closed += new EventHandler(OnClosed);
             window.KeyPressed += new EventHandler<KeyEventArgs>(OnKeyPressed);
+            rs = new RenderTexture((uint)screen.X, (uint)screen.Y);
 
-            pixel = new Vector2f(window.Size.X / screen.X,window.Size.Y / screen.Y);
             distanceProjectionPlane = (screen.X / 2) / TanD(fov / 2);
             caster = new RayCaster
             {
@@ -124,16 +114,42 @@ namespace SFMLTest
             };
             #endregion
 
-            Vector2f player = new Vector2f(80,80);
+            Vector2f player = new Vector2f(caster.CellSize * 6 + 8, caster.CellSize * 5 + 8);
             float angle = 0;
 
             while (window.IsOpen)
             {
                 window.DispatchEvents();
-                window.Clear(Color.Black);
+                rs.Clear(Color.Black);
 
-                Render(player, angle++);
+                Render(player, angle);
 
+                window.Draw(new Vertex[] {
+                    new Vertex
+                    {
+                        Position = new Vector2f(0,0),
+                        TexCoords = new Vector2f(0,0),
+                        Color = Color.White
+                    },
+                    new Vertex
+                    {
+                        Position = new Vector2f(window.Size.X-1,0),
+                        TexCoords = new Vector2f(screen.X-1,0),
+                        Color = Color.White
+                    },
+                    new Vertex
+                    {
+                        Position = new Vector2f(window.Size.X-1,window.Size.Y-1),
+                        TexCoords = new Vector2f(screen.X-1,screen.Y-1),
+                        Color = Color.White
+                    },
+                    new Vertex
+                    {
+                        Position = new Vector2f(0,window.Size.Y-1),
+                        TexCoords = new Vector2f(0,screen.Y-1),
+                        Color = Color.White
+                    }
+                },0,4,PrimitiveType.Quads,new RenderStates(rs.Texture));
                 window.Display();
                 Thread.Sleep(10);
             }
