@@ -1,0 +1,16 @@
+C:\Users\Damián\source\repos\SFMLTest\bin\Debug\SFMLTest.exe.config
+C:\Users\Damián\source\repos\SFMLTest\bin\Debug\SFMLTest.exe
+C:\Users\Damián\source\repos\SFMLTest\bin\Debug\SFMLTest.pdb
+C:\Users\Damián\source\repos\SFMLTest\bin\Debug\SFML.Audio.dll
+C:\Users\Damián\source\repos\SFMLTest\bin\Debug\SFML.Graphics.dll
+C:\Users\Damián\source\repos\SFMLTest\bin\Debug\SFML.System.dll
+C:\Users\Damián\source\repos\SFMLTest\bin\Debug\SFML.Window.dll
+C:\Users\Damián\source\repos\SFMLTest\bin\Debug\SFML.Audio.xml
+C:\Users\Damián\source\repos\SFMLTest\bin\Debug\SFML.Graphics.xml
+C:\Users\Damián\source\repos\SFMLTest\bin\Debug\SFML.System.xml
+C:\Users\Damián\source\repos\SFMLTest\bin\Debug\SFML.Window.xml
+C:\Users\Damián\source\repos\SFMLTest\obj\Debug\SFMLTest.csprojAssemblyReference.cache
+C:\Users\Damián\source\repos\SFMLTest\obj\Debug\SFMLTest.csproj.CoreCompileInputs.cache
+C:\Users\Damián\source\repos\SFMLTest\obj\Debug\SFMLTest.csproj.CopyComplete
+C:\Users\Damián\source\repos\SFMLTest\obj\Debug\SFMLTest.exe
+C:\Users\Damián\source\repos\SFMLTest\obj\Debug\SFMLTest.pdb
