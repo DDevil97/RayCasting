@@ -115,10 +115,47 @@ namespace SFMLTest
             #endregion
 
             Vector2f player = new Vector2f(caster.CellSize * 6 + 8, caster.CellSize * 5 + 8);
-            float angle = 0;
-
+            float angle = 45;
+            Vector2f M;
             while (window.IsOpen)
             {
+                angle -= Keyboard.IsKeyPressed(Keyboard.Key.Left) ? 2 : 0;
+                angle += Keyboard.IsKeyPressed(Keyboard.Key.Right) ? 2 : 0;
+
+                M = new Vector2f(0,0);
+
+                if (Keyboard.IsKeyPressed(Keyboard.Key.W))
+                    M += new Vector2f(CosD(angle) * 2, SinD(angle) * 2);
+
+                if (Keyboard.IsKeyPressed(Keyboard.Key.S))
+                    M -= new Vector2f(CosD(angle) * 2, SinD(angle) * 2);
+
+                if (Keyboard.IsKeyPressed(Keyboard.Key.D))
+                    M += new Vector2f(CosD(angle + 90) * 2, SinD(angle + 90) * 2);
+
+                if (Keyboard.IsKeyPressed(Keyboard.Key.A))
+                    M += new Vector2f(CosD(angle - 90) * 2, SinD(angle - 90) * 2);
+
+
+                RayResult R = caster.RayCast(player, 0);
+                if (R.Magnitude < Math.Abs(M.X) + 10 && Math.Sign(M.X) == 1)
+                    M.X = 0;
+
+                R = caster.RayCast(player, 180);
+                if (R.Magnitude < Math.Abs(M.X) + 10 && Math.Sign(M.X) == -1)
+                    M.X = 0;
+
+                R = caster.RayCast(player, 90);
+                if (R.Magnitude < Math.Abs(M.Y) + 10 && Math.Sign(M.Y) == 1)
+                    M.Y = 0;
+
+                R = caster.RayCast(player, 270);
+                if (R.Magnitude < Math.Abs(M.Y) + 10 && Math.Sign(M.Y) == -1)
+                    M.Y = 0;
+
+                player += M;
+
+
                 window.DispatchEvents();
                 rs.Clear(Color.Black);
 
@@ -156,6 +193,8 @@ namespace SFMLTest
         }
 
         #region Event listeners
+
+
         void OnClosed(object sender, EventArgs e)
         {
             window.Close();
