@@ -53,44 +53,6 @@ namespace SFMLTest
         {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
         };
 
-
-        public void Render(Vector2f player, float angle)
-        {
-            List<Vertex> vertices = new List<Vertex>();
-
-            for (int x = 0; x < screen.X;x++)
-            {
-                float rayAngle = AtanD((x - screen.X / 2.0f) / distanceProjectionPlane);
-                RayResult ray = caster.RayCast(player, angle + rayAngle);
-                int lineHeightHalf = Round((caster.CellSize / (ray.Magnitude * CosD(rayAngle))) * distanceProjectionPlane)/2;
-                Color color = Color.Black;
-                switch (ray.Side)
-                {
-                    case Side.Down:
-                    case Side.Up:
-                        color = new Color(255, 255, 255, 255);
-                        break;
-                    case Side.Left:
-                    case Side.Right:
-                        color = new Color(128, 128, 128, 255);
-                        break;
-                }
-
-                vertices.Add(new Vertex
-                    {
-                        Position = new Vector2f(x , Round(screen.Y / 2 - lineHeightHalf) ),
-                        Color = color
-                    });
-                vertices.Add(new Vertex
-                {
-                    Position = new Vector2f(x , Round(screen.Y / 2 + lineHeightHalf)),
-                    Color = color
-                });
-            }
-
-            rs.Draw(vertices.ToArray(), 0, (uint)vertices.Count, PrimitiveType.Lines);
-        }
-
         public void StartSFMLProgram()
         {
             #region Inicialization      
@@ -106,12 +68,13 @@ namespace SFMLTest
             window.KeyPressed += new EventHandler<KeyEventArgs>(OnKeyPressed);
             rs = new RenderTexture((uint)screen.X, (uint)screen.Y);
 
-            distanceProjectionPlane = (screen.X / 2) / TanD(fov / 2);
             caster = new RayCaster
             {
                 CellSize = 16,
                 Map = Map
             };
+
+            Renderer ren = new Renderer(caster,rs, fov);
             #endregion
 
             Vector2f player = new Vector2f(caster.CellSize * 6 + 8, caster.CellSize * 5 + 8);
@@ -159,7 +122,7 @@ namespace SFMLTest
                 window.DispatchEvents();
                 rs.Clear(Color.Black);
 
-                Render(player, angle);
+                ren.Render(player, angle);
 
                 window.Draw(new Vertex[] {
                     new Vertex
