@@ -29,7 +29,7 @@ namespace SFMLTest
         Font font;
         RayCaster caster;
 
-        Vector2i screen = new Vector2i(100,75);
+        Vector2i screen = new Vector2i(200,175);
 
         float fov = 90;
         float distanceProjectionPlane;
@@ -56,11 +56,11 @@ namespace SFMLTest
         public void StartSFMLProgram()
         {
             #region Inicialization      
-            bool[,] Map = new bool[_m.GetLength(0), _m.GetLength(1)];
+            TileInfo[,] Map = new TileInfo[_m.GetLength(0), _m.GetLength(1)];
 
             for (int y = 0; y < _m.GetLength(1); y++)
                 for (int x = 0; x < _m.GetLength(0); x++)
-                    Map[x, y] = _m[y,x] == 0 ? false : true;
+                    Map[x, y] = _m[y,x] == 0 ? new TileInfo {Solid=false } : new TileInfo { Solid=true};
 
             window = new RenderWindow(new VideoMode(800, 600), "SFML window");
             window.SetVisible(true);

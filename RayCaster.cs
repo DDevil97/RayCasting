@@ -18,7 +18,7 @@ namespace SFMLTest
         #region Properties
         public float CellSize { get; set; }
 
-        public bool[,] Map { get; set; } 
+        public TileInfo[,] Map { get; set; } 
         #endregion
 
         #region Clases
@@ -32,25 +32,34 @@ namespace SFMLTest
 
         public class RayResult
         {
+            public Vector2i Tile { get; set; }
             public Vector2f Position { get; set; }
             public float Magnitude { get; set; }
             public Side Side { get; set; }
         } 
+
+        public class TileInfo
+        {
+            public bool Solid { get; set; }
+            public Vector2i UpAtlas { get; set; }
+            public Vector2i DownAtlas { get; set; }
+            public Vector2i LeftAtlas { get; set; }
+            public Vector2i RightAtlas { get; set; }
+        }
         #endregion
 
-        private bool GetMap(int px, int py)
+        public TileInfo GetMap(int px, int py)
         {
             if (px < 0 || px > Map.GetLength(0) - 1 || py < 0 || py > Map.GetLength(1) - 1)
-                return true;
+                return new TileInfo { Solid = true};
             else
                 return Map[px, py];
         }
-
         public static float TanD(float A) => (float)Math.Tan(A*DegRad);
         public static float CosD(float A) => (float)Math.Cos(A*DegRad);
         public static float SinD(float A) => (float)Math.Sin(A*DegRad);
         public static float AtanD(float L) => (float)Math.Atan(L)/DegRad;
-        public static int Round(float N) => (int)Math.Floor(N);
+        public static int Floor(float N) => (int)Math.Floor(N);
 
         public RayResult RayCast(Vector2f O, float A)
         {
@@ -58,12 +67,14 @@ namespace SFMLTest
             Vector2f Slope = D - O;
             Vector2f Delta = new Vector2f();
             Vector2f Ph = new Vector2f(), Pv = new Vector2f();
+            Vector2i Th, Tv;
             float Dh, Dv;
             RayResult res;
 
             //If Dx is zero, then there's no horizontal intersections
             if (Slope.X == 0)
             {
+                Th = new Vector2i(-1,-1);
                 Ph = new Vector2f(O.X + MaxDistance, O.Y + MaxDistance);
                 Dh = MaxDistance;
             }
@@ -85,15 +96,17 @@ namespace SFMLTest
                     Ph.Y = O.Y + (Slope.Y * (Ph.X - O.X)) / Slope.X;
                 }
 
-                while (!GetMap((int)Math.Floor(Ph.X / CellSize) + (Delta.X < 0 ? -1 : 0), (int)Math.Floor(Ph.Y / CellSize)))
+                while (!GetMap(Floor(Ph.X / CellSize) + (Delta.X < 0 ? -1 : 0), Floor(Ph.Y / CellSize)).Solid)
                     Ph += Delta;
 
+                Th = new Vector2i(Floor(Ph.X / CellSize) + (Delta.X < 0 ? -1 : 0), Floor(Ph.Y / CellSize));
                 Dh = (float)Math.Sqrt(Math.Pow((Ph.X - O.X), 2) + Math.Pow((Ph.Y - O.Y), 2));
             }
 
             //If Dy is zero, then there's no vertical intersections
             if (Slope.Y == 0)
             {
+                Tv = new Vector2i(-1, -1);
                 Pv = new Vector2f(O.X + MaxDistance, O.Y + MaxDistance);
                 Dv = MaxDistance;
             }
@@ -116,9 +129,10 @@ namespace SFMLTest
                 }
 
 
-                while (!GetMap((int)Math.Floor(Pv.X / CellSize), (int)Math.Floor(Pv.Y / CellSize) + (Delta.Y <0 ? -1 : 0)))
+                while (!GetMap(Floor(Pv.X / CellSize), Floor(Pv.Y / CellSize) + (Delta.Y <0 ? -1 : 0)).Solid)
                     Pv += Delta;
 
+                Tv = new Vector2i(Floor(Pv.X / CellSize), Floor(Pv.Y / CellSize) + (Delta.Y < 0 ? -1 : 0));
                 Dv = (float)Math.Sqrt(Math.Pow(Pv.X - O.X, 2) + Math.Pow(Pv.Y - O.Y, 2));
             }
 
@@ -127,6 +141,7 @@ namespace SFMLTest
             {
                 res = new RayResult
                 {
+                    Tile = Th,
                     Position = Ph,
                     Magnitude = Dh,
                     Side = Slope.X < 0 ? Side.Left : Side.Right
@@ -138,6 +153,7 @@ namespace SFMLTest
             {
                 res = new RayResult
                 {
+                    Tile = Tv,
                     Position = Pv,
                     Magnitude = Dv,
                     Side = Slope.Y < 0 ? Side.Up : Side.Down
