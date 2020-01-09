@@ -29,7 +29,7 @@ namespace SFMLTest
         Font font;
         RayCaster caster;
 
-        Vector2i screen = new Vector2i(200,175);
+        Vector2i screen = new Vector2i(800,600);
 
         float fov = 90;
         float distanceProjectionPlane;

@@ -33,15 +33,18 @@ namespace SFMLTest
         public void Render(Vector2f player, float angle)
         {
             List<Vertex> vertices = new List<Vertex>();
+            List<Vertex> points = new List<Vertex>();
 
             for (int x = 0; x < Buffer.Size.X; x++)
             {
                 float rayAngle = AtanD((x - Buffer.Size.X / 2.0f) / DistanceToProjectionPlane);
                 RayResult ray = Caster.RayCast(player, angle + rayAngle);
-                int lineHeightHalf = Floor((Caster.CellSize / (ray.Magnitude * CosD(rayAngle))) * DistanceToProjectionPlane) / 2;
+                int lineHeightHalf = Floor(((Caster.CellSize / (ray.Magnitude * CosD(rayAngle))) * DistanceToProjectionPlane) / 2);
                 Vector2f textureCordUp;
                 Vector2f textureCordDown;
+                Vector2f floorCord;
                 TileInfo t = Caster.GetMap(ray.Tile.X, ray.Tile.Y);
+                
 
                 switch (ray.Side)
                 {
@@ -99,24 +102,25 @@ namespace SFMLTest
                     Color = Color.White,
                     TexCoords = textureCordDown
                 });
+
+                for (int y = Floor(Buffer.Size.Y / 2 + lineHeightHalf); y < Buffer.Size.Y; y++)
+                {
+                    float DistanceToFloor = ((Caster.CellSize * DistanceToProjectionPlane) / (y - Buffer.Size.Y/2)) / CosD(rayAngle);
+                    Vector2f floorPos = player + new Vector2f(DistanceToFloor * CosD(rayAngle + angle), DistanceToFloor * SinD(rayAngle + angle));
+                    floorCord = new Vector2f(Caster.CellSize*1 + (floorPos.X % Caster.CellSize), floorPos.Y % Caster.CellSize);
+
+                    points.Add(new Vertex
+                    {
+                        Position = new Vector2f(x,y),
+                        TexCoords = floorCord,
+                        Color = Color.White
+                    });
+                }
             }
 
             Buffer.Draw(vertices.ToArray(), 0, (uint)vertices.Count, PrimitiveType.Lines,new RenderStates(Textures[MapAtlasInUse]));
 
-            vertices.Clear();
-
-            vertices.Add(new Vertex
-            {
-                Position = new Vector2f(15,15),
-                Color = Color.White,
-            });
-            vertices.Add(new Vertex
-            {
-                Position = new Vector2f(0,15),
-                Color = Color.White,
-            });
-
-            Buffer.Draw(vertices.ToArray(), 0, (uint)vertices.Count, PrimitiveType.Lines);
+            Buffer.Draw(points.ToArray(), 0, (uint)points.Count, PrimitiveType.Points, new RenderStates(Textures[MapAtlasInUse]));
         }
     }
 }
