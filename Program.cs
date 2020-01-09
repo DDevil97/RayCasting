@@ -60,7 +60,13 @@ namespace SFMLTest
 
             for (int y = 0; y < _m.GetLength(1); y++)
                 for (int x = 0; x < _m.GetLength(0); x++)
-                    Map[x, y] = _m[y,x] == 0 ? new TileInfo {Solid=false } : new TileInfo { Solid=true};
+                    Map[x, y] = _m[y,x] == 1 ? new TileInfo {
+                        Solid=true,
+                        DownAtlas = new Vector2i(0,0),
+                        UpAtlas = new Vector2i(0, 0),
+                        LeftAtlas = new Vector2i(1, 0),
+                        RightAtlas = new Vector2i(1, 0)
+                    } : new TileInfo { Solid=false};
 
             window = new RenderWindow(new VideoMode(800, 600), "SFML window");
             window.SetVisible(true);
@@ -75,6 +81,7 @@ namespace SFMLTest
             };
 
             Renderer ren = new Renderer(caster,rs, fov);
+            ren.Textures.Add(new Texture(@"D:\Cosas importantes\Texture.png"));
             #endregion
 
             Vector2f player = new Vector2f(caster.CellSize * 6 + 8, caster.CellSize * 5 + 8);
@@ -128,27 +135,27 @@ namespace SFMLTest
                     new Vertex
                     {
                         Position = new Vector2f(0,0),
-                        TexCoords = new Vector2f(0,0),
-                        Color = Color.White
-                    },
-                    new Vertex
-                    {
-                        Position = new Vector2f(window.Size.X-1,0),
-                        TexCoords = new Vector2f(screen.X-1,0),
-                        Color = Color.White
-                    },
-                    new Vertex
-                    {
-                        Position = new Vector2f(window.Size.X-1,window.Size.Y-1),
-                        TexCoords = new Vector2f(screen.X-1,screen.Y-1),
+                        TexCoords = new Vector2f(0,screen.Y-1),
                         Color = Color.White
                     },
                     new Vertex
                     {
                         Position = new Vector2f(0,window.Size.Y-1),
-                        TexCoords = new Vector2f(0,screen.Y-1),
+                        TexCoords = new Vector2f(0,0),
                         Color = Color.White
-                    }
+                    },
+                    new Vertex
+                    {
+                        Position = new Vector2f(window.Size.X-1,window.Size.Y-1),
+                        TexCoords = new Vector2f(screen.X-1,0),
+                        Color = Color.White
+                    },
+                    new Vertex
+                    {
+                        Position = new Vector2f(window.Size.X-1,0),
+                        TexCoords = new Vector2f(screen.X-1,screen.Y-1),
+                        Color = Color.White
+                    },
                 },0,4,PrimitiveType.Quads,new RenderStates(rs.Texture));
                 window.Display();
                 Thread.Sleep(10);
