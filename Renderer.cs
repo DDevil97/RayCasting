@@ -105,13 +105,21 @@ namespace SFMLTest
 
                 for (int y = Floor(Buffer.Size.Y / 2 + lineHeightHalf); y < Buffer.Size.Y; y++)
                 {
-                    float DistanceToFloor = ((Caster.CellSize * DistanceToProjectionPlane) / (y - Buffer.Size.Y/2)) / CosD(rayAngle);
+                    float DistanceToFloor = ((Caster.CellSize  / (y - Buffer.Size.Y/2f)) * DistanceToProjectionPlane/2) / CosD(rayAngle);
                     Vector2f floorPos = player + new Vector2f(DistanceToFloor * CosD(rayAngle + angle), DistanceToFloor * SinD(rayAngle + angle));
-                    floorCord = new Vector2f(Caster.CellSize*1 + (floorPos.X % Caster.CellSize), floorPos.Y % Caster.CellSize);
+                    floorCord = new Vector2f(Caster.CellSize*2 + (floorPos.X % Caster.CellSize), floorPos.Y % Caster.CellSize);
 
                     points.Add(new Vertex
                     {
                         Position = new Vector2f(x,y),
+                        TexCoords = floorCord,
+                        Color = Color.White
+                    });
+
+
+                    points.Add(new Vertex
+                    {
+                        Position = new Vector2f(x, Buffer.Size.Y-y),
                         TexCoords = floorCord,
                         Color = Color.White
                     });

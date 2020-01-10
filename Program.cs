@@ -29,10 +29,9 @@ namespace SFMLTest
         Font font;
         RayCaster caster;
 
-        Vector2i screen = new Vector2i(800,600);
+        Vector2i screen = new Vector2i(200,150);
 
-        float fov = 90;
-        float distanceProjectionPlane;
+        float fov = 100;
 
         int[,] _m = {
         {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
@@ -81,7 +80,7 @@ namespace SFMLTest
             };
 
             Renderer ren = new Renderer(caster,rs, fov);
-            ren.Textures.Add(new Texture(@"D:\Cosas importantes\Texture.png"));
+            ren.Textures.Add(new Texture("Texture.png"));
             #endregion
 
             Vector2f player = new Vector2f(caster.CellSize * 6 + 8, caster.CellSize * 5 + 8);
