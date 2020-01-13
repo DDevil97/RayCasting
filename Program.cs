@@ -86,8 +86,22 @@ namespace SFMLTest
             Vector2f player = new Vector2f(caster.CellSize * 6 + 8, caster.CellSize * 5 + 8);
             float angle = 45;
             Vector2f M;
+
+            font = new Font("Perfect DOS VGA 437 Win.ttf");
+            Text t = new Text("Fps: ",font,16);
+            int fps = 0;
+            int fpsCounter = 0;
+            int ticks = Environment.TickCount;
+
             while (window.IsOpen)
             {
+                if (Environment.TickCount - ticks >= 1000)
+                {
+                    fps = fpsCounter;
+                    fpsCounter = 0;
+                    ticks = Environment.TickCount;
+                }
+
                 angle -= Keyboard.IsKeyPressed(Keyboard.Key.Left) ? 2 : 0;
                 angle += Keyboard.IsKeyPressed(Keyboard.Key.Right) ? 2 : 0;
 
@@ -129,6 +143,8 @@ namespace SFMLTest
                 rs.Clear(Color.Black);
 
                 ren.Render(player, angle);
+                t.DisplayedString = $"Fps: {fps}";
+                rs.Draw(t);
 
                 window.Draw(new Vertex[] {
                     new Vertex
@@ -156,8 +172,11 @@ namespace SFMLTest
                         Color = Color.White
                     },
                 },0,4,PrimitiveType.Quads,new RenderStates(rs.Texture));
+
                 window.Display();
                 Thread.Sleep(10);
+
+                fpsCounter++;
             }
         }
 

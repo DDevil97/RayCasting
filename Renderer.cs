@@ -42,15 +42,13 @@ namespace SFMLTest
                 int lineHeightHalf = Floor(((Caster.CellSize / (ray.Magnitude * CosD(rayAngle))) * DistanceToProjectionPlane) / 2);
                 Vector2f textureCordUp;
                 Vector2f textureCordDown;
-                Vector2f floorCord;
                 TileInfo t = Caster.GetMap(ray.Tile.X, ray.Tile.Y);
-                
 
                 switch (ray.Side)
                 {
                     case Side.Down:
                         textureCordUp = new Vector2f(
-                            t.DownAtlas.X * Caster.CellSize+(ray.Position.X % Caster.CellSize),
+                            t.DownAtlas.X * Caster.CellSize + (ray.Position.X % Caster.CellSize),
                             t.DownAtlas.Y * Caster.CellSize);
                         textureCordDown = new Vector2f(
                             textureCordUp.X,
@@ -67,7 +65,7 @@ namespace SFMLTest
                     case Side.Left:
                         textureCordUp = new Vector2f(
                             t.LeftAtlas.X * Caster.CellSize + (ray.Position.Y % Caster.CellSize),
-                            t.LeftAtlas.Y * Caster.CellSize );
+                            t.LeftAtlas.Y * Caster.CellSize);
                         textureCordDown = new Vector2f(
                             textureCordUp.X,
                             textureCordUp.Y + Caster.CellSize);
@@ -75,7 +73,7 @@ namespace SFMLTest
                     case Side.Right:
                         textureCordUp = new Vector2f(
                             t.RightAtlas.X * Caster.CellSize + (ray.Position.Y % Caster.CellSize),
-                            t.RightAtlas.Y * Caster.CellSize );
+                            t.RightAtlas.Y * Caster.CellSize);
                         textureCordDown = new Vector2f(
                             textureCordUp.X,
                             textureCordUp.Y + Caster.CellSize);
@@ -102,33 +100,40 @@ namespace SFMLTest
                     Color = Color.White,
                     TexCoords = textureCordDown
                 });
-
-                for (int y = Floor(Buffer.Size.Y / 2 + lineHeightHalf); y < Buffer.Size.Y; y++)
-                {
-                    float DistanceToFloor = ((Caster.CellSize  / (y - Buffer.Size.Y/2f)) * DistanceToProjectionPlane/2) / CosD(rayAngle);
-                    Vector2f floorPos = player + new Vector2f(DistanceToFloor * CosD(rayAngle + angle), DistanceToFloor * SinD(rayAngle + angle));
-                    floorCord = new Vector2f(Caster.CellSize*2 + (floorPos.X % Caster.CellSize), floorPos.Y % Caster.CellSize);
-
-                    points.Add(new Vertex
-                    {
-                        Position = new Vector2f(x,y),
-                        TexCoords = floorCord,
-                        Color = Color.White
-                    });
-
-
-                    points.Add(new Vertex
-                    {
-                        Position = new Vector2f(x, Buffer.Size.Y-y),
-                        TexCoords = floorCord,
-                        Color = Color.White
-                    });
-                }
             }
 
-            Buffer.Draw(vertices.ToArray(), 0, (uint)vertices.Count, PrimitiveType.Lines,new RenderStates(Textures[MapAtlasInUse]));
+            for (int y = Floor(Buffer.Size.Y / 2); y < Buffer.Size.Y; y++)
+            {
+                float dist = ((Caster.CellSize / (y - Buffer.Size.Y / 2f)) * DistanceToProjectionPlane / 2) / CosD(Fov / 2);
+                Vector2f left = player + new Vector2f(dist * CosD(angle - Fov / 2), dist * SinD(angle - Fov / 2));
+                Vector2f right = player + new Vector2f(dist * CosD(angle + Fov / 2), dist * SinD(angle + Fov / 2));
+
+                Vector2f delta = right - left;
+                delta /= Buffer.Size.X;
+
+                for (int x = 0; x < Buffer.Size.X; x++)
+                {
+                    points.Add(new Vertex
+                    {
+                        Position = new Vector2f(x, y),
+                        TexCoords = new Vector2f(Caster.CellSize * 2 + (left.X % Caster.CellSize), left.Y % Caster.CellSize),
+                        Color = Color.White
+                    });
+
+                    points.Add(new Vertex
+                    {
+                        Position = new Vector2f(x, Buffer.Size.Y - y),
+                        TexCoords = new Vector2f(Caster.CellSize * 2 + (left.X % Caster.CellSize), left.Y % Caster.CellSize),
+                        Color = Color.White
+                    });
+                    left += delta;
+                }
+            };
+
 
             Buffer.Draw(points.ToArray(), 0, (uint)points.Count, PrimitiveType.Points, new RenderStates(Textures[MapAtlasInUse]));
+        
+            Buffer.Draw(vertices.ToArray(), 0, (uint)vertices.Count, PrimitiveType.Lines,new RenderStates(Textures[MapAtlasInUse]));
         }
     }
 }

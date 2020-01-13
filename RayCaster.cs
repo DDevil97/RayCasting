@@ -12,11 +12,11 @@ namespace SFMLTest
     {
         #region Constants
         const float DegRad = 3.14159265359f / 180.0f;
-        const float MaxDistance = 60000f;
+        const int MaxDistance = 60000;
         #endregion
 
         #region Properties
-        public float CellSize { get; set; }
+        public int CellSize { get; set; }
 
         public TileInfo[,] Map { get; set; } 
         #endregion
@@ -48,6 +48,12 @@ namespace SFMLTest
         }
         #endregion
 
+        public static float TanD(float A) => (float)Math.Tan(A * DegRad);
+        public static float CosD(float A) => (float)Math.Cos(A * DegRad);
+        public static float SinD(float A) => (float)Math.Sin(A * DegRad);
+        public static float AtanD(float L) => (float)Math.Atan(L) / DegRad;
+        public static int Floor(float N) => (int)Math.Floor(N);
+
         public TileInfo GetMap(int px, int py)
         {
             if (px < 0 || px > Map.GetLength(0) - 1 || py < 0 || py > Map.GetLength(1) - 1)
@@ -55,15 +61,10 @@ namespace SFMLTest
             else
                 return Map[px, py];
         }
-        public static float TanD(float A) => (float)Math.Tan(A*DegRad);
-        public static float CosD(float A) => (float)Math.Cos(A*DegRad);
-        public static float SinD(float A) => (float)Math.Sin(A*DegRad);
-        public static float AtanD(float L) => (float)Math.Atan(L)/DegRad;
-        public static int Floor(float N) => (int)Math.Floor(N);
 
         public RayResult RayCast(Vector2f O, float A)
         {
-            Vector2f D = O + new Vector2f(CosD(A) * 100, SinD(A) * 100);
+            Vector2f D = O + new Vector2f((CosD(A) * 100), (SinD(A) * 100));
             Vector2f Slope = D - O;
             Vector2f Delta = new Vector2f();
             Vector2f Ph = new Vector2f(), Pv = new Vector2f();
@@ -82,7 +83,7 @@ namespace SFMLTest
             {
                 Delta.X = CellSize * Math.Sign(Slope.X);
 
-                Ph.X = (float)Math.Floor(O.X / CellSize);
+                Ph.X = Floor(O.X / CellSize);
                 Ph.X = (Ph.X + (Math.Sign(Delta.X) == 1 ? 1 : 0)) * CellSize;
 
                 if (Slope.Y == 0)
@@ -114,7 +115,7 @@ namespace SFMLTest
             {
                 Delta.Y = CellSize * Math.Sign(Slope.Y);
 
-                Pv.Y = (float)Math.Floor(O.Y / CellSize);
+                Pv.Y = Floor(O.Y / CellSize);
                 Pv.Y = (Pv.Y + (Math.Sign(Delta.Y) == 1 ? 1 : 0)) * CellSize;
 
                 if (Slope.X == 0)
