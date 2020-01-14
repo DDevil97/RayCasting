@@ -45,13 +45,30 @@ namespace SFMLTest
             public Vector2i DownAtlas { get; set; }
             public Vector2i LeftAtlas { get; set; }
             public Vector2i RightAtlas { get; set; }
+            public Vector2i FloorAtlas { get; set; }
+            public Vector2i CeilAtlas { get; set; }
+        }
+
+        public class Sprite
+        {
+            public Vector2f Position { get; set; }
+            public Vector2i Atlas { get; set; }
+
+            public float Distance { get; set; }
         }
         #endregion
 
+        public static Vector2f RotateAround(Vector2f vector, Vector2f origin, float angle)
+        {
+            vector -= origin;
+            return new Vector2f(CosD(angle) * vector.X - SinD(angle) * vector.Y, SinD(angle) * vector.X + CosD(angle) * vector.Y) + origin;
+        }
         public static float TanD(float A) => (float)Math.Tan(A * DegRad);
         public static float CosD(float A) => (float)Math.Cos(A * DegRad);
         public static float SinD(float A) => (float)Math.Sin(A * DegRad);
+        public static float Atan2D(float y, float x) => (float)Math.Atan2(y,x) / DegRad;
         public static float AtanD(float L) => (float)Math.Atan(L) / DegRad;
+        public static float Distance(Vector2f a, Vector2f b) => (float)Math.Sqrt(Math.Pow(a.X-b.X,2)+Math.Pow(a.Y-b.Y,2));
         public static int Floor(float N) => (int)Math.Floor(N);
 
         public TileInfo GetMap(int px, int py)
@@ -64,18 +81,16 @@ namespace SFMLTest
 
         public RayResult RayCast(Vector2f O, float A)
         {
-            Vector2f D = O + new Vector2f((CosD(A) * 100), (SinD(A) * 100));
+            Vector2f D = O + new Vector2f(CosD(A) * 100, SinD(A) * 100);
             Vector2f Slope = D - O;
             Vector2f Delta = new Vector2f();
             Vector2f Ph = new Vector2f(), Pv = new Vector2f();
-            Vector2i Th, Tv;
             float Dh, Dv;
             RayResult res;
 
             //If Dx is zero, then there's no horizontal intersections
             if (Slope.X == 0)
             {
-                Th = new Vector2i(-1,-1);
                 Ph = new Vector2f(O.X + MaxDistance, O.Y + MaxDistance);
                 Dh = MaxDistance;
             }
@@ -100,14 +115,12 @@ namespace SFMLTest
                 while (!GetMap(Floor(Ph.X / CellSize) + (Delta.X < 0 ? -1 : 0), Floor(Ph.Y / CellSize)).Solid)
                     Ph += Delta;
 
-                Th = new Vector2i(Floor(Ph.X / CellSize) + (Delta.X < 0 ? -1 : 0), Floor(Ph.Y / CellSize));
                 Dh = (float)Math.Sqrt(Math.Pow((Ph.X - O.X), 2) + Math.Pow((Ph.Y - O.Y), 2));
             }
 
             //If Dy is zero, then there's no vertical intersections
             if (Slope.Y == 0)
             {
-                Tv = new Vector2i(-1, -1);
                 Pv = new Vector2f(O.X + MaxDistance, O.Y + MaxDistance);
                 Dv = MaxDistance;
             }
@@ -133,7 +146,6 @@ namespace SFMLTest
                 while (!GetMap(Floor(Pv.X / CellSize), Floor(Pv.Y / CellSize) + (Delta.Y <0 ? -1 : 0)).Solid)
                     Pv += Delta;
 
-                Tv = new Vector2i(Floor(Pv.X / CellSize), Floor(Pv.Y / CellSize) + (Delta.Y < 0 ? -1 : 0));
                 Dv = (float)Math.Sqrt(Math.Pow(Pv.X - O.X, 2) + Math.Pow(Pv.Y - O.Y, 2));
             }
 
@@ -142,7 +154,7 @@ namespace SFMLTest
             {
                 res = new RayResult
                 {
-                    Tile = Th,
+                    Tile = new Vector2i(Floor(Ph.X / CellSize) + (Delta.X < 0 ? -1 : 0), Floor(Ph.Y / CellSize)),
                     Position = Ph,
                     Magnitude = Dh,
                     Side = Slope.X < 0 ? Side.Left : Side.Right
@@ -154,7 +166,7 @@ namespace SFMLTest
             {
                 res = new RayResult
                 {
-                    Tile = Tv,
+                    Tile = new Vector2i(Floor(Pv.X / CellSize), Floor(Pv.Y / CellSize) + (Delta.Y < 0 ? -1 : 0)),
                     Position = Pv,
                     Magnitude = Dv,
                     Side = Slope.Y < 0 ? Side.Up : Side.Down

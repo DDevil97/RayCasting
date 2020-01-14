@@ -31,13 +31,13 @@ namespace SFMLTest
 
         Vector2i screen = new Vector2i(200,150);
 
-        float fov = 100;
+        float fov = 90;
 
         int[,] _m = {
         {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
         {1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1},
         {1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1},
-        {1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1},
+        {1,0,1,0,0,1,0,0,0,0,0,0,0,0,0,1},
         {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
         {1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1},
         {1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1},
@@ -65,7 +65,17 @@ namespace SFMLTest
                         UpAtlas = new Vector2i(0, 0),
                         LeftAtlas = new Vector2i(1, 0),
                         RightAtlas = new Vector2i(1, 0)
-                    } : new TileInfo { Solid=false};
+                    } :
+                    new TileInfo
+                    {
+                        Solid = false,
+                        DownAtlas = new Vector2i(0, 0),
+                        UpAtlas = new Vector2i(0, 0),
+                        LeftAtlas = new Vector2i(1, 0),
+                        RightAtlas = new Vector2i(1, 0),
+                        CeilAtlas = new Vector2i(0,0),
+                        FloorAtlas = new Vector2i(2,0)
+                    };
 
             window = new RenderWindow(new VideoMode(800, 600), "SFML window");
             window.SetVisible(true);
@@ -81,10 +91,13 @@ namespace SFMLTest
 
             Renderer ren = new Renderer(caster,rs, fov);
             ren.Textures.Add(new Texture("Texture.png"));
+            ren.MapAtlasInUse = 0;
             #endregion
 
             Vector2f player = new Vector2f(caster.CellSize * 6 + 8, caster.CellSize * 5 + 8);
-            float angle = 45;
+            Vector2f sp1 = player + new Vector2f(35, 15);
+            Vector2f sp2 = player + new Vector2f(50, 70);
+            float angle = 0;
             Vector2f M;
 
             font = new Font("Perfect DOS VGA 437 Win.ttf");
@@ -142,7 +155,24 @@ namespace SFMLTest
                 window.DispatchEvents();
                 rs.Clear(Color.Black);
 
-                ren.Render(player, angle);
+                ren.Render(player, angle, new List<RayCaster.Sprite>
+                {
+                    new RayCaster.Sprite
+                    {
+                        Atlas = new Vector2i(3,0),
+                        Position = sp1
+                    },
+                    new RayCaster.Sprite
+                    {
+                        Atlas = new Vector2i(3,0),
+                        Position = sp2
+                    }
+                },
+                new List<Vector3f>
+                {
+                    new Vector3f(sp1.X,sp1.Y,0),
+                    new Vector3f(sp2.X, sp2.Y, 0)
+                });
                 t.DisplayedString = $"Fps: {fps}";
                 rs.Draw(t);
 
