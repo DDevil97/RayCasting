@@ -54,6 +54,7 @@ namespace SFMLTest
             public Vector2f Position { get; set; }
             public Vector2i Atlas { get; set; }
 
+            public float Light { get; set; }
             public float Distance { get; set; }
         }
         #endregion

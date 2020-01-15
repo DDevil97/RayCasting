@@ -29,7 +29,7 @@ namespace SFMLTest
         Font font;
         RayCaster caster;
         float angle = 0;
-        Vector2i screen = new Vector2i(200,150);
+        Vector2i screen = new Vector2i(400,300);
 
         float fov = 75;
 
@@ -98,7 +98,10 @@ namespace SFMLTest
             Vector2f player = new Vector2f(caster.CellSize * 6 + 8, caster.CellSize * 5 + 8);
             Vector2f sp1 = player + new Vector2f(35, 15);
             Vector2f sp2 = player + new Vector2f(50, 70);
-            
+
+            Vector2f sp3 = new Vector2f(caster.CellSize * 6 + 8, caster.CellSize * 5 + 8) + new Vector2f(30, -30);
+            Vector2f scen = new Vector2f(caster.CellSize * 6 + 8, caster.CellSize * 5 + 8) + new Vector2f(0, -30);
+
             Vector2f M;
 
             font = new Font("Perfect DOS VGA 437 Win.ttf");
@@ -107,10 +110,11 @@ namespace SFMLTest
             int fpsCounter = 0;
             int ticks = Environment.TickCount;
 
+            ren.LightMapScaler = 2;
             ren.GenerateLightMap(
                 new List<Vector3f>
                 {
-                    //new Vector3f(sp1.X,sp1.Y,0),
+                    new Vector3f(sp1.X,sp1.Y,0),
                     new Vector3f(sp2.X, sp2.Y, 0)
                 });
 
@@ -163,6 +167,8 @@ namespace SFMLTest
 
                 player += M;
 
+                sp3 = RotateAround(sp3, scen, 2);
+
                 Mouse.SetPosition(new Vector2i((int)window.Size.X / 2, (int)window.Size.Y / 2));
 
                 window.DispatchEvents();
@@ -179,6 +185,11 @@ namespace SFMLTest
                     {
                         Atlas = new Vector2i(3,0),
                         Position = sp2
+                    },
+                     new RayCaster.Sprite
+                    {
+                        Atlas = new Vector2i(3,0),
+                        Position = sp3
                     }
                 },
                 new List<Vector3f>

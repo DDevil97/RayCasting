@@ -16,13 +16,15 @@ namespace SFMLTest
         private float DistanceToProjectionPlane { get; set; }
         private float[] Angles { get; set; }
         private float[] DepthPerStrip { get; set; }
-        private float[,] LightMap{get;set;}
+        private float[,] LightMap { get; set; }
 
         public float Fov { get; set; }
         public RayCaster Caster { get; set; }
         public RenderTexture Buffer { get; set; }
         public List<Texture> Textures { get; set; }
         public Vector2f AtlasTileSize { get; set; }
+
+        public int LightMapScaler { get; set; }
 
         public int MapAtlasInUse { get; set; }
 
@@ -44,14 +46,14 @@ namespace SFMLTest
 
         public void GenerateLightMap(List<Vector3f> lamps)
         {
-            LightMap = new float[Caster.CellSize * Caster.Map.GetLength(0)*4, Caster.CellSize * Caster.Map.GetLength(1)*4];
+            LightMap = new float[Caster.CellSize * Caster.Map.GetLength(0) * LightMapScaler, Caster.CellSize * Caster.Map.GetLength(1) * LightMapScaler];
 
             for (int y = 0; y < LightMap.GetLength(1); y++)
-                for (int x = 0;x < LightMap.GetLength(0); x++)
+                for (int x = 0; x < LightMap.GetLength(0); x++)
                 {
                     foreach (Vector3f l in lamps)
                     {
-                        LightMap[x,y] += lampIntensityAtPoint(new Vector2f(x/4f,y/4f), new Vector2f(l.X, l.Y));
+                        LightMap[x, y] += lampIntensityAtPoint(new Vector2f((float)x / LightMapScaler, (float)y / LightMapScaler), new Vector2f(l.X, l.Y));
                     }
                     LightMap[x, y] += 0.1f;
                     if (LightMap[x, y] >= 1) LightMap[x, y] = 1;
@@ -63,7 +65,7 @@ namespace SFMLTest
             RayResult r = Caster.RayCast(lPos, Atan2D(mPos.Y - lPos.Y, mPos.X - lPos.X));
             if (r.Magnitude + 1 >= Distance(mPos, lPos))
             {
-                return 1f / (float)Math.Sqrt(Distance(mPos, lPos)) * 4;
+                return 1f / ((float)Math.Pow(Distance(mPos, lPos), 2) / 255);
             }
             else
                 return 0;
@@ -134,15 +136,15 @@ namespace SFMLTest
                         break;
                 }
 
-                int pX = Floor(ray.Position.X*4);
-                if (pX >= LightMap.GetLength(0)) pX = LightMap.GetLength(0)-1;
-                if (pX <0) pX = 0;
+                int pX = Floor(ray.Position.X * LightMapScaler);
+                if (pX >= LightMap.GetLength(0)) pX = LightMap.GetLength(0) - 1;
+                if (pX < 0) pX = 0;
 
-                int pY = Floor(ray.Position.Y*4);
+                int pY = Floor(ray.Position.Y * LightMapScaler);
                 if (pY >= LightMap.GetLength(0)) pY = LightMap.GetLength(1) - 1;
                 if (pY < 0) pY = 0;
 
-                float i = LightMap[pX , pY];
+                float i = LightMap[pX, pY];
 
                 Color wc = new Color((byte)(i * 255), (byte)(i * 255), (byte)(i * 255));
 
@@ -170,11 +172,11 @@ namespace SFMLTest
                 for (int x = 0; x < Buffer.Size.X; x++)
                 {
 
-                    int pX = Floor(left.X*4);
+                    int pX = Floor(left.X * LightMapScaler);
                     if (pX >= LightMap.GetLength(0)) pX = LightMap.GetLength(0) - 1;
                     if (pX < 0) pX = 0;
 
-                    int pY = Floor(left.Y*4);
+                    int pY = Floor(left.Y * LightMapScaler);
                     if (pY >= LightMap.GetLength(0)) pY = LightMap.GetLength(1) - 1;
                     if (pY < 0) pY = 0;
 
@@ -199,9 +201,20 @@ namespace SFMLTest
                 }
             };
 
+           
             List<Sprite> finalList = new List<Sprite>();
             foreach (Sprite spr in sprites)
             {
+                int pX = Floor(spr.Position.X * LightMapScaler);
+                if (pX >= LightMap.GetLength(0)) pX = LightMap.GetLength(0) - 1;
+                if (pX < 0) pX = 0;
+
+                int pY = Floor(spr.Position.Y * LightMapScaler);
+                if (pY >= LightMap.GetLength(0)) pY = LightMap.GetLength(1) - 1;
+                if (pY < 0) pY = 0;
+
+                spr.Light = LightMap[pX, pY];
+                
                 spr.Position = RotateAround(spr.Position, player, -angle);
                 spr.Distance = spr.Position.X - player.X;
                 if (spr.Distance > 0)
@@ -212,12 +225,16 @@ namespace SFMLTest
 
             foreach (Sprite spr in finalList)
             {
+
                 int lineHeight = Floor((Caster.CellSize / spr.Distance) * DistanceToProjectionPlane);
                 int px = (int)Buffer.Size.X / 2 + Floor(((spr.Position.Y - player.Y) / spr.Distance) * DistanceToProjectionPlane);
 
+
+                Color wc = new Color((byte)(spr.Light * 255), (byte)(spr.Light * 255), (byte)(spr.Light * 255));
                 for (int x = 0; x < lineHeight; x++)
                 {
                     int posX = (px + lineHeight / 2) - x;
+
                     if (posX >= 0 && posX < Buffer.Size.X && DepthPerStrip[posX] > spr.Distance)
                     {
                         float tex = ((float)x / lineHeight) * Caster.CellSize;
@@ -233,13 +250,13 @@ namespace SFMLTest
                         spritesLines.Add(new Vertex
                         {
                             Position = new Vector2f(posX, Buffer.Size.Y / 2 - lineHeight / 2),
-                            Color = Color.White,
+                            Color = wc,
                             TexCoords = textureCordUp
                         });
                         spritesLines.Add(new Vertex
                         {
                             Position = new Vector2f(posX, Buffer.Size.Y / 2 + lineHeight / 2),
-                            Color = Color.White,
+                            Color = wc,
                             TexCoords = textureCordDown
                         });
                     }
