@@ -16,6 +16,7 @@ namespace SFMLTest
         private float DistanceToProjectionPlane { get; set; }
         private float[] Angles { get; set; }
         private float[] DepthPerStrip { get; set; }
+        private float[,] LightMap{get;set;}
 
         public float Fov { get; set; }
         public RayCaster Caster { get; set; }
@@ -36,8 +37,25 @@ namespace SFMLTest
             DepthPerStrip = new float[Buffer.Size.X];
             AtlasTileSize = new Vector2f(Caster.CellSize, Caster.CellSize);
             Angles = new float[Buffer.Size.X];
+
             for (int x = 0; x < Buffer.Size.X; x++)
                 Angles[x] = AtanD((x - Buffer.Size.X / 2.0f) / DistanceToProjectionPlane);
+        }
+
+        public void GenerateLightMap(List<Vector3f> lamps)
+        {
+            LightMap = new float[Caster.CellSize * Caster.Map.GetLength(0)*4, Caster.CellSize * Caster.Map.GetLength(1)*4];
+
+            for (int y = 0; y < LightMap.GetLength(1); y++)
+                for (int x = 0;x < LightMap.GetLength(0); x++)
+                {
+                    foreach (Vector3f l in lamps)
+                    {
+                        LightMap[x,y] += lampIntensityAtPoint(new Vector2f(x/4f,y/4f), new Vector2f(l.X, l.Y));
+                    }
+                    LightMap[x, y] += 0.1f;
+                    if (LightMap[x, y] >= 1) LightMap[x, y] = 1;
+                }
         }
 
         private float lampIntensityAtPoint(Vector2f mPos, Vector2f lPos)
@@ -58,7 +76,7 @@ namespace SFMLTest
             List<Vertex> points = new List<Vertex>();
 
             int MinLineHeight = (int)Buffer.Size.Y;
-            ;
+
             for (int x = 0; x < Buffer.Size.X; x++)
             {
                 float rayAngle = Angles[x];
@@ -116,13 +134,15 @@ namespace SFMLTest
                         break;
                 }
 
-                float i = 0;
-                foreach (Vector3f l in lamps)
-                {
-                    i += lampIntensityAtPoint(ray.Position, new Vector2f(l.X, l.Y));
-                }
-                i += 0.1f;
-                if (i >= 1) i = 1;
+                int pX = Floor(ray.Position.X*4);
+                if (pX >= LightMap.GetLength(0)) pX = LightMap.GetLength(0)-1;
+                if (pX <0) pX = 0;
+
+                int pY = Floor(ray.Position.Y*4);
+                if (pY >= LightMap.GetLength(0)) pY = LightMap.GetLength(1) - 1;
+                if (pY < 0) pY = 0;
+
+                float i = LightMap[pX , pY];
 
                 Color wc = new Color((byte)(i * 255), (byte)(i * 255), (byte)(i * 255));
 
@@ -149,13 +169,16 @@ namespace SFMLTest
 
                 for (int x = 0; x < Buffer.Size.X; x++)
                 {
-                    float i = 0;
-                    foreach (Vector3f l in lamps)
-                    {
-                        i += lampIntensityAtPoint(left, new Vector2f(l.X, l.Y));
-                    }
-                    i += 0.1f;
-                    if (i >= 1) i = 1;
+
+                    int pX = Floor(left.X*4);
+                    if (pX >= LightMap.GetLength(0)) pX = LightMap.GetLength(0) - 1;
+                    if (pX < 0) pX = 0;
+
+                    int pY = Floor(left.Y*4);
+                    if (pY >= LightMap.GetLength(0)) pY = LightMap.GetLength(1) - 1;
+                    if (pY < 0) pY = 0;
+
+                    float i = LightMap[pX, pY];
                     Color wc = new Color((byte)(i * 255), (byte)(i * 255), (byte)(i * 255));
                     TileInfo t = Caster.GetMap(Floor(left.X / Caster.CellSize), Floor(left.Y / Caster.CellSize));
                     points.Add(new Vertex

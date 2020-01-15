@@ -28,18 +28,18 @@ namespace SFMLTest
         RenderWindow window;
         Font font;
         RayCaster caster;
-
+        float angle = 0;
         Vector2i screen = new Vector2i(200,150);
 
-        float fov = 90;
+        float fov = 75;
 
         int[,] _m = {
         {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
         {1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1},
         {1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1},
-        {1,0,1,0,0,1,0,0,0,0,0,0,0,0,0,1},
+        {1,0,1,0,0,1,0,1,0,0,0,0,0,0,0,1},
         {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-        {1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1},
+        {1,0,1,0,0,1,0,1,0,0,0,0,0,0,0,1},
         {1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1},
         {1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1},
         {1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1},
@@ -81,6 +81,7 @@ namespace SFMLTest
             window.SetVisible(true);
             window.Closed += new EventHandler(OnClosed);
             window.KeyPressed += new EventHandler<KeyEventArgs>(OnKeyPressed);
+            window.MouseMoved += Window_MouseMoved;
             rs = new RenderTexture((uint)screen.X, (uint)screen.Y);
 
             caster = new RayCaster
@@ -97,7 +98,7 @@ namespace SFMLTest
             Vector2f player = new Vector2f(caster.CellSize * 6 + 8, caster.CellSize * 5 + 8);
             Vector2f sp1 = player + new Vector2f(35, 15);
             Vector2f sp2 = player + new Vector2f(50, 70);
-            float angle = 0;
+            
             Vector2f M;
 
             font = new Font("Perfect DOS VGA 437 Win.ttf");
@@ -105,6 +106,13 @@ namespace SFMLTest
             int fps = 0;
             int fpsCounter = 0;
             int ticks = Environment.TickCount;
+
+            ren.GenerateLightMap(
+                new List<Vector3f>
+                {
+                    //new Vector3f(sp1.X,sp1.Y,0),
+                    new Vector3f(sp2.X, sp2.Y, 0)
+                });
 
             while (window.IsOpen)
             {
@@ -114,6 +122,10 @@ namespace SFMLTest
                     fpsCounter = 0;
                     ticks = Environment.TickCount;
                 }
+
+                angle -= (window.Size.X / 2 - Mouse.GetPosition().X)/4f;
+
+                
 
                 angle -= Keyboard.IsKeyPressed(Keyboard.Key.Left) ? 2 : 0;
                 angle += Keyboard.IsKeyPressed(Keyboard.Key.Right) ? 2 : 0;
@@ -151,6 +163,7 @@ namespace SFMLTest
 
                 player += M;
 
+                Mouse.SetPosition(new Vector2i((int)window.Size.X / 2, (int)window.Size.Y / 2));
 
                 window.DispatchEvents();
                 rs.Clear(Color.Black);
@@ -204,10 +217,14 @@ namespace SFMLTest
                 },0,4,PrimitiveType.Quads,new RenderStates(rs.Texture));
 
                 window.Display();
-                Thread.Sleep(10);
+                Thread.Sleep(1);
 
                 fpsCounter++;
             }
+        }
+
+        private void Window_MouseMoved(object sender, MouseMoveEventArgs e)
+        {
         }
 
         #region Event listeners
