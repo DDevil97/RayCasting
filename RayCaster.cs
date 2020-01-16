@@ -6,19 +6,16 @@ using System.Threading.Tasks;
 using SFML;
 using SFML.Graphics;
 using SFML.System;
+using static SFMLTest.Helpers;
 
 namespace SFMLTest
 {
     class RayCaster
     {
-        #region Constants
-        const float DegRad = 3.14159265359f / 180.0f;
         const int MaxDistance = 60000;
-        #endregion
 
         #region Properties
         public int CellSize { get; set; }
-
         public TileInfo[,] Map { get; set; }
         #endregion
 
@@ -28,15 +25,16 @@ namespace SFMLTest
             Up = 0,
             Right,
             Down,
-            Left
+            Left,
+            None
         }
 
         public class RayResult
         {
             public Vector2i Tile { get; set; }
             public Vector2f Position { get; set; }
-            public float Magnitude { get; set; }
             public Side Side { get; set; }
+            public float Magnitude { get; set; }
         }
 
         public class TileInfo
@@ -54,7 +52,6 @@ namespace SFMLTest
         {
             public Vector2f Position { get; set; }
             public Vector2i Atlas { get; set; }
-
             public Color Light { get; set; }
             public float Distance { get; set; }
         }
@@ -69,20 +66,17 @@ namespace SFMLTest
         public static Vector2f RotateAround(Vector2f vector, Vector2f origin, float angle)
         {
             vector -= origin;
-            return new Vector2f(CosD(angle) * vector.X - SinD(angle) * vector.Y, SinD(angle) * vector.X + CosD(angle) * vector.Y) + origin;
+            return new Vector2f(
+                CosD(angle) * vector.X - SinD(angle) * vector.Y, 
+                SinD(angle) * vector.X + CosD(angle) * vector.Y) 
+                + origin;
         }
-        public static float TanD(float A) => (float)Math.Tan(A * DegRad);
-        public static float CosD(float A) => (float)Math.Cos(A * DegRad);
-        public static float SinD(float A) => (float)Math.Sin(A * DegRad);
-        public static float Atan2D(float y, float x) => (float)Math.Atan2(y, x) / DegRad;
-        public static float AtanD(float L) => (float)Math.Atan(L) / DegRad;
-        public static float Distance(Vector2f a, Vector2f b) => (float)Math.Sqrt(Math.Pow(a.X - b.X, 2) + Math.Pow(a.Y - b.Y, 2));
-        public static int Floor(float N) => (int)Math.Floor(N);
-        public static T Clamp<T>(dynamic num, dynamic bottom, dynamic top)
+
+        public static Vector2f Rotate(Vector2f vector, float angle)
         {
-            if (num < bottom) return (T)bottom;
-            if (num > top) return (T)top;
-            return (T)num;
+            return new Vector2f(
+                CosD(angle) * vector.X - SinD(angle) * vector.Y,
+                SinD(angle) * vector.X + CosD(angle) * vector.Y);
         }
 
         public TileInfo GetMap(int px, int py)
@@ -95,7 +89,7 @@ namespace SFMLTest
 
         public RayResult RayCast(Vector2f O, float A)
         {
-            Vector2f D = O + new Vector2f(CosD(A) * 100, SinD(A) * 100);
+            Vector2f D = O + new Vector2f(CosD(A) * 1000, SinD(A) * 1000);
             Vector2f Slope = D - O;
             Vector2f Delta = new Vector2f();
             Vector2f Ph = new Vector2f(), Pv = new Vector2f();
@@ -189,6 +183,5 @@ namespace SFMLTest
                 return res;
             }
         }
-
     }
 }

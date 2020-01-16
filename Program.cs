@@ -8,6 +8,7 @@ using SFML.Graphics;
 using SFML.System;
 using SFML.Window;
 using static SFMLTest.RayCaster;
+using static SFMLTest.Helpers;
 
 namespace SFMLTest
 {
@@ -29,7 +30,7 @@ namespace SFMLTest
         Font font;
         RayCaster caster;
         float angle = 0;
-        Vector2i screen = new Vector2i(200, 150);
+        Vector2i screen = new Vector2i(400, 300);
 
         float fov = 90;
 
@@ -78,7 +79,7 @@ namespace SFMLTest
                         FloorAtlas = new Vector2i(2, 0)
                     };
 
-            window = new RenderWindow(new VideoMode(1024, 768), "SFML window",Styles.Default);
+            window = new RenderWindow(new VideoMode(800, 600), "SFML window",Styles.Default);
             window.SetVisible(true);
             window.Closed += new EventHandler(OnClosed);
             window.KeyPressed += new EventHandler<KeyEventArgs>(OnKeyPressed);
@@ -87,7 +88,7 @@ namespace SFMLTest
             
             caster = new RayCaster
             {
-                CellSize = 16,
+                CellSize = 32,
                 Map = Map
             };
 
@@ -196,7 +197,7 @@ namespace SFMLTest
                     },
                      new RayCaster.Sprite
                     {
-                        Atlas = new Vector2i(3,0),
+                        Atlas = new Vector2i(4,0),
                         Position = sp3
                     }
                 });

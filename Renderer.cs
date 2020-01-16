@@ -7,27 +7,84 @@ using System.Text;
 using System.Threading.Tasks;
 using static SFMLTest.RayCaster;
 using Sprite = SFMLTest.RayCaster.Sprite;
+using static SFMLTest.Helpers;
+using System.Threading;
 
 namespace SFMLTest
 {
     class Renderer
     {
-        private float HalfFov { get; set; }
-        private float DistanceToProjectionPlane { get; set; }
-        private float[] Angles { get; set; }
-        private float[] DepthPerStrip { get; set; }
-        private Color[,] LightMap { get; set; }
+        #region Properties
+        private float HalfFov;
+        private float DistanceToProjectionPlane;
+        private float[] Angles;
+        private float[] DepthPerStrip;
+        private Color[,] LightMap;
+        private float LightMultiplier;
 
         public float Fov { get; set; }
+        public int LightMapScaler { get; set; }
+        public int MapAtlasInUse { get; set; }
         public Color AmbientLight { get; set; }
         public RayCaster Caster { get; set; }
         public RenderTexture Buffer { get; set; }
         public List<Texture> Textures { get; set; }
-        public Vector2f AtlasTileSize { get; set; }
+        public Vector2f AtlasTileSize { get; set; } 
+        #endregion
 
-        public int LightMapScaler { get; set; }
+        private float calculateLampIntensityAtPoint(Vector2f mPos, Vector2f lPos)
+        {
+            RayResult r = Caster.RayCast(lPos, Atan2D(mPos.Y - lPos.Y, mPos.X - lPos.X));
+            if (r.Magnitude + 0.1 >= Distance(mPos, lPos))
+                return 1f / ((float)Math.Pow(Distance(mPos, lPos), 2) / LightMultiplier);
+            else
+                return 0;
+        }
 
-        public int MapAtlasInUse { get; set; }
+        private List<Vertex> calculateFloor(Vector2f player, float angle, int yFrom, int yTo, ref List<Vertex> points)
+        {
+            if (yTo > Buffer.Size.Y)
+                yTo = (int)Buffer.Size.Y;
+
+            for (int y = yFrom; y < yTo; y++) 
+            {              
+                float dist = ((Caster.CellSize / (y - Buffer.Size.Y / 2f)) * DistanceToProjectionPlane / 2f) / CosD(HalfFov);
+                Vector2f left = player + new Vector2f(dist * CosD(angle - HalfFov), dist * SinD(angle - HalfFov));
+                Vector2f right = player + new Vector2f(dist * CosD(angle + HalfFov), dist * SinD(angle + HalfFov));
+                Vector2f delta = (right - left) / Buffer.Size.X;
+
+                for (int x = 0; x < Buffer.Size.X; x++)
+                {
+
+                    int pX = (int)(left.X * LightMapScaler);
+                    if (pX >= LightMap.GetLength(0)) pX = LightMap.GetLength(0) - 1;
+                    if (pX < 0) pX = 0;
+
+                    int pY = (int)(left.Y * LightMapScaler);
+                    if (pY >= LightMap.GetLength(0)) pY = LightMap.GetLength(1) - 1;
+                    if (pY < 0) pY = 0;
+
+                    TileInfo t = Caster.GetMap(Floor(left.X / Caster.CellSize), Floor(left.Y / Caster.CellSize));
+                    points.Add(new Vertex
+                    {
+                        Position = new Vector2f(x, y),
+                        TexCoords = new Vector2f(t.FloorAtlas.X * Caster.CellSize + (left.X % Caster.CellSize), t.FloorAtlas.Y * Caster.CellSize + left.Y % Caster.CellSize),
+                        Color = LightMap[pX, pY]
+                    });
+
+                    points.Add(new Vertex
+                    {
+                        Position = new Vector2f(x, Buffer.Size.Y - y),
+                        TexCoords = new Vector2f(t.CeilAtlas.X * Caster.CellSize + (left.X % Caster.CellSize), t.CeilAtlas.Y * Caster.CellSize + left.Y % Caster.CellSize),
+                        Color = LightMap[pX, pY]
+                    });
+
+                    left += delta;
+                }
+            }
+
+            return points;
+        }
 
         public Renderer(RayCaster rc, RenderTexture rt, float fov)
         {
@@ -41,6 +98,7 @@ namespace SFMLTest
             AtlasTileSize = new Vector2f(Caster.CellSize, Caster.CellSize);
             AmbientLight = new Color(32, 32, 32);
             Angles = new float[Buffer.Size.X];
+            LightMultiplier = 400;
 
             for (int x = 0; x < Buffer.Size.X; x++)
                 Angles[x] = AtanD((x - Buffer.Size.X / 2.0f) / DistanceToProjectionPlane);
@@ -61,7 +119,7 @@ namespace SFMLTest
                     float b = 0;
                     foreach (Light l in lamps)
                     {
-                        float i = lampIntensityAtPoint(new Vector2f((float)x / LightMapScaler, (float)y / LightMapScaler), l.Position);
+                        float i = calculateLampIntensityAtPoint(new Vector2f((float)x / LightMapScaler, (float)y / LightMapScaler), l.Position);
                         r += i * l.Color.R;
                         g += i * l.Color.G;
                         b += i * l.Color.B;
@@ -75,17 +133,6 @@ namespace SFMLTest
 
 
                 }
-        }
-
-        private float lampIntensityAtPoint(Vector2f mPos, Vector2f lPos)
-        {
-            RayResult r = Caster.RayCast(lPos, Atan2D(mPos.Y - lPos.Y, mPos.X - lPos.X));
-            if (r.Magnitude + 1 >= Distance(mPos, lPos))
-            {
-                return 1f / ((float)Math.Pow(Distance(mPos, lPos), 2) / 400);
-            }
-            else
-                return 0;
         }
 
         public void Render(Vector2f player, float angle, List<Sprite> sprites)
@@ -153,11 +200,11 @@ namespace SFMLTest
                         break;
                 }
 
-                int pX = Floor(ray.Position.X * LightMapScaler);
+                int pX = (int)(ray.Position.X * LightMapScaler);
                 if (pX >= LightMap.GetLength(0)) pX = LightMap.GetLength(0) - 1;
                 if (pX < 0) pX = 0;
 
-                int pY = Floor(ray.Position.Y * LightMapScaler);
+                int pY = (int)(ray.Position.Y * LightMapScaler);
                 if (pY >= LightMap.GetLength(0)) pY = LightMap.GetLength(1) - 1;
                 if (pY < 0) pY = 0;
 
@@ -175,70 +222,57 @@ namespace SFMLTest
                 });
             }
 
-            for (int y = Floor(Buffer.Size.Y / 2) + MinLineHeight; y < Buffer.Size.Y; y++)
+            int chunkCount = 4;
+            int start = Floor(Buffer.Size.Y / 2) + MinLineHeight;
+            int chunkSize = ((int)Buffer.Size.Y - start) / chunkCount;
+
+            List<Vertex>[] a = new List<Vertex>[chunkCount];
+            List<Thread> threads = new List<Thread>();
+
+            for (int i = 0; i <chunkCount; i++)
             {
-                float dist = ((Caster.CellSize / (y - Buffer.Size.Y / 2f)) * DistanceToProjectionPlane / 2f) / CosD(HalfFov);
-                Vector2f left = player + new Vector2f(dist * CosD(angle - HalfFov), dist * SinD(angle - HalfFov));
-                Vector2f right = player + new Vector2f(dist * CosD(angle + HalfFov), dist * SinD(angle + HalfFov));
-                Vector2f delta = (right - left) / Buffer.Size.X;
+                a[i] = new List<Vertex>();
+                int b = i;
+                Thread t = new Thread(new ThreadStart(() => calculateFloor(player, angle, start + chunkSize * b, start + chunkSize * b + chunkSize,ref a[b])));
+                threads.Add(t);
+            }
 
-                for (int x = 0; x < Buffer.Size.X; x++)
-                {
+            foreach (Thread t in threads)
+                t.Start();
 
-                    int pX = Floor(left.X * LightMapScaler);
-                    if (pX >= LightMap.GetLength(0)) pX = LightMap.GetLength(0) - 1;
-                    if (pX < 0) pX = 0;
+            while (threads.Count(t => t.ThreadState == ThreadState.Running) > 0) ;
 
-                    int pY = Floor(left.Y * LightMapScaler);
-                    if (pY >= LightMap.GetLength(0)) pY = LightMap.GetLength(1) - 1;
-                    if (pY < 0) pY = 0;
-
-                    TileInfo t = Caster.GetMap(Floor(left.X / Caster.CellSize), Floor(left.Y / Caster.CellSize));
-                    points.Add(new Vertex
-                    {
-                        Position = new Vector2f(x, y),
-                        TexCoords = new Vector2f(t.FloorAtlas.X * Caster.CellSize + (left.X % Caster.CellSize), t.FloorAtlas.Y * Caster.CellSize + left.Y % Caster.CellSize),
-                        Color = LightMap[pX, pY]
-                    });
-
-                    points.Add(new Vertex
-                    {
-                        Position = new Vector2f(x, Buffer.Size.Y - y),
-                        TexCoords = new Vector2f(t.CeilAtlas.X * Caster.CellSize + (left.X % Caster.CellSize), t.CeilAtlas.Y * Caster.CellSize + left.Y % Caster.CellSize),
-                        Color = LightMap[pX, pY]
-                    });
-
-                    left += delta;
-                }
-            };
+            foreach (List<Vertex> l in a)
+               if (l != null)
+                    points.AddRange(l);
 
 
             List<Sprite> finalList = new List<Sprite>();
             foreach (Sprite spr in sprites)
             {
-                int pX = Floor(spr.Position.X * LightMapScaler);
+                int pX = (int)(spr.Position.X * LightMapScaler);
                 if (pX >= LightMap.GetLength(0)) pX = LightMap.GetLength(0) - 1;
                 if (pX < 0) pX = 0;
 
-                int pY = Floor(spr.Position.Y * LightMapScaler);
+                int pY = (int)(spr.Position.Y * LightMapScaler);
                 if (pY >= LightMap.GetLength(0)) pY = LightMap.GetLength(1) - 1;
                 if (pY < 0) pY = 0;
 
                 spr.Light = LightMap[pX, pY];
 
-                spr.Position = RotateAround(spr.Position, player, -angle);
-                spr.Distance = spr.Position.X - player.X;
+                spr.Position = Rotate(spr.Position - player, -angle);
+                spr.Distance = spr.Position.X;
                 if (spr.Distance > 0)
                     finalList.Add(spr);
             }
 
-            finalList = finalList.OrderByDescending(s => s.Position.X - player.X).ToList();
+            finalList = finalList.OrderByDescending(s => s.Position.X).ToList();
 
             foreach (Sprite spr in finalList)
             {
 
-                int lineHeight = Floor((Caster.CellSize / spr.Distance) * DistanceToProjectionPlane);
-                int px = (int)Buffer.Size.X / 2 + Floor(((spr.Position.Y - player.Y) / spr.Distance) * DistanceToProjectionPlane);
+                int lineHeight = (int)((Caster.CellSize / spr.Distance) * DistanceToProjectionPlane);
+                int px = (int)(Buffer.Size.X / 2 + (spr.Position.Y / spr.Distance) * DistanceToProjectionPlane);
 
 
                 for (int x = 0; x < lineHeight; x++)
@@ -259,13 +293,13 @@ namespace SFMLTest
 
                         spritesLines.Add(new Vertex
                         {
-                            Position = new Vector2f(posX, Buffer.Size.Y / 2 - lineHeight / 2),
+                            Position = new Vector2f(posX, Buffer.Size.Y/2 - lineHeight / 2),
                             Color = spr.Light,
                             TexCoords = textureCordUp
                         });
                         spritesLines.Add(new Vertex
                         {
-                            Position = new Vector2f(posX, Buffer.Size.Y / 2 + lineHeight / 2),
+                            Position = new Vector2f(posX, Buffer.Size.Y /2 + lineHeight / 2),
                             Color = spr.Light,
                             TexCoords = textureCordDown
                         });
