@@ -16,9 +16,10 @@ namespace SFMLTest
         private float DistanceToProjectionPlane { get; set; }
         private float[] Angles { get; set; }
         private float[] DepthPerStrip { get; set; }
-        private float[,] LightMap { get; set; }
+        private Color[,] LightMap { get; set; }
 
         public float Fov { get; set; }
+        public Color AmbientLight { get; set; }
         public RayCaster Caster { get; set; }
         public RenderTexture Buffer { get; set; }
         public List<Texture> Textures { get; set; }
@@ -38,25 +39,35 @@ namespace SFMLTest
             Textures = new List<Texture>();
             DepthPerStrip = new float[Buffer.Size.X];
             AtlasTileSize = new Vector2f(Caster.CellSize, Caster.CellSize);
+            AmbientLight = new Color(32, 32, 32);
             Angles = new float[Buffer.Size.X];
 
             for (int x = 0; x < Buffer.Size.X; x++)
                 Angles[x] = AtanD((x - Buffer.Size.X / 2.0f) / DistanceToProjectionPlane);
         }
 
-        public void GenerateLightMap(List<Vector3f> lamps)
+        public void GenerateLightMap(List<Light> lamps)
         {
-            LightMap = new float[Caster.CellSize * Caster.Map.GetLength(0) * LightMapScaler, Caster.CellSize * Caster.Map.GetLength(1) * LightMapScaler];
+            LightMap = new Color[Caster.CellSize * Caster.Map.GetLength(0) * LightMapScaler, Caster.CellSize * Caster.Map.GetLength(1) * LightMapScaler];
 
             for (int y = 0; y < LightMap.GetLength(1); y++)
                 for (int x = 0; x < LightMap.GetLength(0); x++)
                 {
-                    foreach (Vector3f l in lamps)
+                    float r = 0;
+                    float g = 0;
+                    float b = 0;
+                    foreach (Light l in lamps)
                     {
-                        LightMap[x, y] += lampIntensityAtPoint(new Vector2f((float)x / LightMapScaler, (float)y / LightMapScaler), new Vector2f(l.X, l.Y));
+                        float i = lampIntensityAtPoint(new Vector2f((float)x / LightMapScaler, (float)y / LightMapScaler), l.Position);
+                        r += i * l.Color.R;
+                        g += i * l.Color.G;
+                        b += i * l.Color.B;
                     }
-                    LightMap[x, y] += 0.1f;
-                    if (LightMap[x, y] >= 1) LightMap[x, y] = 1;
+                    r +=AmbientLight.R;
+                    g +=AmbientLight.G;
+                    b +=AmbientLight.B;
+
+                    LightMap[x, y] = new Color(Clamp<byte>(r,0,255),Clamp<byte>(g,0,255),Clamp<byte>(b,0,255));
                 }
         }
 
@@ -71,7 +82,7 @@ namespace SFMLTest
                 return 0;
         }
 
-        public void Render(Vector2f player, float angle, List<Sprite> sprites, List<Vector3f> lamps)
+        public void Render(Vector2f player, float angle, List<Sprite> sprites)
         {
             List<Vertex> vertices = new List<Vertex>();
             List<Vertex> spritesLines = new List<Vertex>();
@@ -144,20 +155,16 @@ namespace SFMLTest
                 if (pY >= LightMap.GetLength(0)) pY = LightMap.GetLength(1) - 1;
                 if (pY < 0) pY = 0;
 
-                float i = LightMap[pX, pY];
-
-                Color wc = new Color((byte)(i * 255), (byte)(i * 255), (byte)(i * 255));
-
                 vertices.Add(new Vertex
                 {
                     Position = new Vector2f(x, Buffer.Size.Y / 2 - lineHeightHalf),
-                    Color = wc,
+                    Color = LightMap[pX, pY],
                     TexCoords = textureCordUp
                 });
                 vertices.Add(new Vertex
                 {
                     Position = new Vector2f(x, Buffer.Size.Y / 2 + lineHeightHalf),
-                    Color = wc,
+                    Color = LightMap[pX, pY],
                     TexCoords = textureCordDown
                 });
             }
@@ -180,21 +187,19 @@ namespace SFMLTest
                     if (pY >= LightMap.GetLength(0)) pY = LightMap.GetLength(1) - 1;
                     if (pY < 0) pY = 0;
 
-                    float i = LightMap[pX, pY];
-                    Color wc = new Color((byte)(i * 255), (byte)(i * 255), (byte)(i * 255));
                     TileInfo t = Caster.GetMap(Floor(left.X / Caster.CellSize), Floor(left.Y / Caster.CellSize));
                     points.Add(new Vertex
                     {
                         Position = new Vector2f(x, y),
                         TexCoords = new Vector2f(t.FloorAtlas.X * Caster.CellSize + (left.X % Caster.CellSize), t.FloorAtlas.Y * Caster.CellSize + left.Y % Caster.CellSize),
-                        Color = wc
-                    });
+                        Color = LightMap[pX, pY]
+                });
 
                     points.Add(new Vertex
                     {
                         Position = new Vector2f(x, Buffer.Size.Y - y),
                         TexCoords = new Vector2f(t.CeilAtlas.X * Caster.CellSize + (left.X % Caster.CellSize), t.CeilAtlas.Y * Caster.CellSize + left.Y % Caster.CellSize),
-                        Color = wc
+                        Color = LightMap[pX, pY]
                     });
 
                     left += delta;
@@ -230,7 +235,6 @@ namespace SFMLTest
                 int px = (int)Buffer.Size.X / 2 + Floor(((spr.Position.Y - player.Y) / spr.Distance) * DistanceToProjectionPlane);
 
 
-                Color wc = new Color((byte)(spr.Light * 255), (byte)(spr.Light * 255), (byte)(spr.Light * 255));
                 for (int x = 0; x < lineHeight; x++)
                 {
                     int posX = (px + lineHeight / 2) - x;
@@ -250,13 +254,13 @@ namespace SFMLTest
                         spritesLines.Add(new Vertex
                         {
                             Position = new Vector2f(posX, Buffer.Size.Y / 2 - lineHeight / 2),
-                            Color = wc,
+                            Color = spr.Light,
                             TexCoords = textureCordUp
                         });
                         spritesLines.Add(new Vertex
                         {
                             Position = new Vector2f(posX, Buffer.Size.Y / 2 + lineHeight / 2),
-                            Color = wc,
+                            Color = spr.Light,
                             TexCoords = textureCordDown
                         });
                     }

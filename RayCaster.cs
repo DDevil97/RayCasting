@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SFML;
+using SFML.Graphics;
 using SFML.System;
 
 namespace SFMLTest
@@ -18,7 +19,7 @@ namespace SFMLTest
         #region Properties
         public int CellSize { get; set; }
 
-        public TileInfo[,] Map { get; set; } 
+        public TileInfo[,] Map { get; set; }
         #endregion
 
         #region Clases
@@ -36,7 +37,7 @@ namespace SFMLTest
             public Vector2f Position { get; set; }
             public float Magnitude { get; set; }
             public Side Side { get; set; }
-        } 
+        }
 
         public class TileInfo
         {
@@ -54,8 +55,14 @@ namespace SFMLTest
             public Vector2f Position { get; set; }
             public Vector2i Atlas { get; set; }
 
-            public float Light { get; set; }
+            public Color Light { get; set; }
             public float Distance { get; set; }
+        }
+
+        public class Light
+        {
+            public Color Color { get; set; }
+            public Vector2f Position { get; set; }
         }
         #endregion
 
@@ -67,15 +74,21 @@ namespace SFMLTest
         public static float TanD(float A) => (float)Math.Tan(A * DegRad);
         public static float CosD(float A) => (float)Math.Cos(A * DegRad);
         public static float SinD(float A) => (float)Math.Sin(A * DegRad);
-        public static float Atan2D(float y, float x) => (float)Math.Atan2(y,x) / DegRad;
+        public static float Atan2D(float y, float x) => (float)Math.Atan2(y, x) / DegRad;
         public static float AtanD(float L) => (float)Math.Atan(L) / DegRad;
-        public static float Distance(Vector2f a, Vector2f b) => (float)Math.Sqrt(Math.Pow(a.X-b.X,2)+Math.Pow(a.Y-b.Y,2));
+        public static float Distance(Vector2f a, Vector2f b) => (float)Math.Sqrt(Math.Pow(a.X - b.X, 2) + Math.Pow(a.Y - b.Y, 2));
         public static int Floor(float N) => (int)Math.Floor(N);
+        public static T Clamp<T>(dynamic num, dynamic bottom, dynamic top)
+        {
+            if (num < bottom) return (T)bottom;
+            if (num > top) return (T)top;
+            return (T)num;
+        }
 
         public TileInfo GetMap(int px, int py)
         {
             if (px < 0 || px > Map.GetLength(0) - 1 || py < 0 || py > Map.GetLength(1) - 1)
-                return new TileInfo { Solid = true};
+                return new TileInfo { Solid = true };
             else
                 return Map[px, py];
         }
@@ -144,7 +157,7 @@ namespace SFMLTest
                 }
 
 
-                while (!GetMap(Floor(Pv.X / CellSize), Floor(Pv.Y / CellSize) + (Delta.Y <0 ? -1 : 0)).Solid)
+                while (!GetMap(Floor(Pv.X / CellSize), Floor(Pv.Y / CellSize) + (Delta.Y < 0 ? -1 : 0)).Solid)
                     Pv += Delta;
 
                 Dv = (float)Math.Sqrt(Math.Pow(Pv.X - O.X, 2) + Math.Pow(Pv.Y - O.Y, 2));

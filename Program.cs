@@ -29,9 +29,9 @@ namespace SFMLTest
         Font font;
         RayCaster caster;
         float angle = 0;
-        Vector2i screen = new Vector2i(400,300);
+        Vector2i screen = new Vector2i(200, 150);
 
-        float fov = 75;
+        float fov = 90;
 
         int[,] _m = {
         {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
@@ -59,9 +59,10 @@ namespace SFMLTest
 
             for (int y = 0; y < _m.GetLength(1); y++)
                 for (int x = 0; x < _m.GetLength(0); x++)
-                    Map[x, y] = _m[y,x] == 1 ? new TileInfo {
-                        Solid=true,
-                        DownAtlas = new Vector2i(0,0),
+                    Map[x, y] = _m[y, x] == 1 ? new TileInfo
+                    {
+                        Solid = true,
+                        DownAtlas = new Vector2i(0, 0),
                         UpAtlas = new Vector2i(0, 0),
                         LeftAtlas = new Vector2i(1, 0),
                         RightAtlas = new Vector2i(1, 0)
@@ -73,24 +74,24 @@ namespace SFMLTest
                         UpAtlas = new Vector2i(0, 0),
                         LeftAtlas = new Vector2i(1, 0),
                         RightAtlas = new Vector2i(1, 0),
-                        CeilAtlas = new Vector2i(0,0),
-                        FloorAtlas = new Vector2i(2,0)
+                        CeilAtlas = new Vector2i(0, 0),
+                        FloorAtlas = new Vector2i(2, 0)
                     };
 
-            window = new RenderWindow(new VideoMode(800, 600), "SFML window");
+            window = new RenderWindow(new VideoMode(1024, 768), "SFML window",Styles.Default);
             window.SetVisible(true);
             window.Closed += new EventHandler(OnClosed);
             window.KeyPressed += new EventHandler<KeyEventArgs>(OnKeyPressed);
             window.MouseMoved += Window_MouseMoved;
             rs = new RenderTexture((uint)screen.X, (uint)screen.Y);
-
+            
             caster = new RayCaster
             {
                 CellSize = 16,
                 Map = Map
             };
 
-            Renderer ren = new Renderer(caster,rs, fov);
+            Renderer ren = new Renderer(caster, rs, fov);
             ren.Textures.Add(new Texture("Texture.png"));
             ren.MapAtlasInUse = 0;
             #endregion
@@ -105,17 +106,24 @@ namespace SFMLTest
             Vector2f M;
 
             font = new Font("Perfect DOS VGA 437 Win.ttf");
-            Text t = new Text("Fps: ",font,16);
+            Text t = new Text("Fps: ", font, 16);
             int fps = 0;
             int fpsCounter = 0;
             int ticks = Environment.TickCount;
 
             ren.LightMapScaler = 2;
             ren.GenerateLightMap(
-                new List<Vector3f>
+                new List<Light>
                 {
-                    new Vector3f(sp1.X,sp1.Y,0),
-                    new Vector3f(sp2.X, sp2.Y, 0)
+                    new Light {
+                        Position = new Vector2f(sp1.X,sp1.Y),
+                        Color = new Color(255,255,255)
+
+                    },
+                    new Light {
+                        Position = new Vector2f(sp2.X,sp2.Y), 
+                        Color = new Color(255,255,255)
+                    }
                 });
 
             while (window.IsOpen)
@@ -127,14 +135,14 @@ namespace SFMLTest
                     ticks = Environment.TickCount;
                 }
 
-                angle -= (window.Size.X / 2 - Mouse.GetPosition().X)/4f;
+                angle -= (window.Size.X / 2 - Mouse.GetPosition().X) / 4f;
 
-                
+
 
                 angle -= Keyboard.IsKeyPressed(Keyboard.Key.Left) ? 2 : 0;
                 angle += Keyboard.IsKeyPressed(Keyboard.Key.Right) ? 2 : 0;
 
-                M = new Vector2f(0,0);
+                M = new Vector2f(0, 0);
 
                 if (Keyboard.IsKeyPressed(Keyboard.Key.W))
                     M += new Vector2f(CosD(angle) * 2, SinD(angle) * 2);
@@ -191,11 +199,6 @@ namespace SFMLTest
                         Atlas = new Vector2i(3,0),
                         Position = sp3
                     }
-                },
-                new List<Vector3f>
-                {
-                    new Vector3f(sp1.X,sp1.Y,0),
-                    new Vector3f(sp2.X, sp2.Y, 0)
                 });
                 t.DisplayedString = $"Fps: {fps}";
                 rs.Draw(t);
@@ -225,7 +228,7 @@ namespace SFMLTest
                         TexCoords = new Vector2f(screen.X-1,screen.Y-1),
                         Color = Color.White
                     },
-                },0,4,PrimitiveType.Quads,new RenderStates(rs.Texture));
+                }, 0, 4, PrimitiveType.Quads, new RenderStates(rs.Texture));
 
                 window.Display();
                 Thread.Sleep(1);
@@ -250,7 +253,7 @@ namespace SFMLTest
         {
             if (e.Code == Keyboard.Key.Escape)
                 window.Close();
-        } 
+        }
         #endregion
     }
 }
