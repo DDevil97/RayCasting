@@ -49,8 +49,11 @@ namespace SFMLTest
         public void GenerateLightMap(List<Light> lamps)
         {
             LightMap = new Color[Caster.CellSize * Caster.Map.GetLength(0) * LightMapScaler, Caster.CellSize * Caster.Map.GetLength(1) * LightMapScaler];
-
             for (int y = 0; y < LightMap.GetLength(1); y++)
+                for (int x = 0; x < LightMap.GetLength(0); x++)
+                    LightMap[x,y] = AmbientLight;
+
+                    for (int y = 0; y < LightMap.GetLength(1); y++)
                 for (int x = 0; x < LightMap.GetLength(0); x++)
                 {
                     float r = 0;
@@ -63,11 +66,14 @@ namespace SFMLTest
                         g += i * l.Color.G;
                         b += i * l.Color.B;
                     }
-                    r +=AmbientLight.R;
-                    g +=AmbientLight.G;
-                    b +=AmbientLight.B;
+                    LightMap[x, y] += new Color(Clamp<byte>(r, 0, 255), Clamp<byte>(g, 0, 255), Clamp<byte>(b, 0, 255));
 
-                    LightMap[x, y] = new Color(Clamp<byte>(r,0,255),Clamp<byte>(g,0,255),Clamp<byte>(b,0,255));
+                    LightMap[Clamp<int>(x - 1, 0, LightMap.GetLength(0) - 1), Clamp<int>(y, 0, LightMap.GetLength(0) - 1)] += new Color(Clamp<byte>(r / 4, 0, 255), Clamp<byte>(g / 4, 0, 255), Clamp<byte>(b / 4, 0, 255));
+                    LightMap[Clamp<int>(x + 1, 0, LightMap.GetLength(0) - 1), Clamp<int>(y, 0, LightMap.GetLength(0) - 1)] += new Color(Clamp<byte>(r / 4, 0, 255), Clamp<byte>(g / 4, 0, 255), Clamp<byte>(b / 4, 0, 255));
+                    LightMap[Clamp<int>(x, 0, LightMap.GetLength(0) - 1), Clamp<int>(y + 1, 0, LightMap.GetLength(0) - 1)] += new Color(Clamp<byte>(r / 4, 0, 255), Clamp<byte>(g / 4, 0, 255), Clamp<byte>(b / 4, 0, 255));
+                    LightMap[Clamp<int>(x, 0, LightMap.GetLength(0) - 1), Clamp<int>(y - 1, 0, LightMap.GetLength(0) - 1)] += new Color(Clamp<byte>(r / 4, 0, 255), Clamp<byte>(g / 4, 0, 255), Clamp<byte>(b / 4, 0, 255));
+
+
                 }
         }
 
@@ -76,7 +82,7 @@ namespace SFMLTest
             RayResult r = Caster.RayCast(lPos, Atan2D(mPos.Y - lPos.Y, mPos.X - lPos.X));
             if (r.Magnitude + 1 >= Distance(mPos, lPos))
             {
-                return 1f / ((float)Math.Pow(Distance(mPos, lPos), 2) / 255);
+                return 1f / ((float)Math.Pow(Distance(mPos, lPos), 2) / 400);
             }
             else
                 return 0;
@@ -193,7 +199,7 @@ namespace SFMLTest
                         Position = new Vector2f(x, y),
                         TexCoords = new Vector2f(t.FloorAtlas.X * Caster.CellSize + (left.X % Caster.CellSize), t.FloorAtlas.Y * Caster.CellSize + left.Y % Caster.CellSize),
                         Color = LightMap[pX, pY]
-                });
+                    });
 
                     points.Add(new Vertex
                     {
@@ -206,7 +212,7 @@ namespace SFMLTest
                 }
             };
 
-           
+
             List<Sprite> finalList = new List<Sprite>();
             foreach (Sprite spr in sprites)
             {
@@ -219,7 +225,7 @@ namespace SFMLTest
                 if (pY < 0) pY = 0;
 
                 spr.Light = LightMap[pX, pY];
-                
+
                 spr.Position = RotateAround(spr.Position, player, -angle);
                 spr.Distance = spr.Position.X - player.X;
                 if (spr.Distance > 0)

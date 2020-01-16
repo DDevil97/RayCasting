@@ -122,7 +122,7 @@ namespace SFMLTest
                     },
                     new Light {
                         Position = new Vector2f(sp2.X,sp2.Y), 
-                        Color = new Color(255,255,255)
+                        Color = new Color(255,0,255)
                     }
                 });
 
