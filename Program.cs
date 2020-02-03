@@ -19,8 +19,6 @@ namespace SFMLTest
             MySFMLProgram app = new MySFMLProgram();
             app.StartSFMLProgram();
         }
-
-
     }
 
     class MySFMLProgram
@@ -30,7 +28,7 @@ namespace SFMLTest
         Font font;
         RayCaster caster;
         float angle = 0;
-        Vector2i screen = new Vector2i(400, 300);
+        Vector2i screen = new Vector2i(200, 150);
 
         float fov = 90;
 
