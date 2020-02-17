@@ -9,6 +9,7 @@ using SFML.System;
 using SFML.Window;
 using static SFMLTest.RayCaster;
 using static SFMLTest.Helpers;
+using SFMLTest.Tile;
 
 namespace SFMLTest
 {
@@ -36,15 +37,15 @@ namespace SFMLTest
         {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
         {1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1},
         {1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1},
-        {1,0,1,0,0,1,0,1,0,0,0,0,0,0,0,1},
+        {1,0,1,0,0,2,0,2,0,0,0,0,0,0,0,1},
         {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-        {1,0,1,0,0,1,0,1,0,0,0,0,0,0,0,1},
+        {1,0,1,0,0,2,0,0,0,0,0,0,0,0,0,1},
         {1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1},
         {1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1},
         {1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1},
         {1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1},
         {1,1,1,0,0,0,0,1,1,0,1,1,1,0,1,1},
-        {1,0,0,0,0,0,0,1,0,0,1,0,0,0,0,1},
+        {1,0,0,0,0,2,0,1,0,0,1,0,0,0,0,1},
         {1,0,0,0,0,0,0,1,0,0,1,0,0,0,0,1},
         {1,0,1,0,0,1,1,1,1,0,1,0,0,0,0,1},
         {1,0,1,0,0,1,0,0,0,0,1,0,0,0,0,1},
@@ -54,30 +55,52 @@ namespace SFMLTest
         public void StartSFMLProgram()
         {
             #region Inicialization      
-            TileInfo[,] Map = new TileInfo[_m.GetLength(0), _m.GetLength(1)];
+            BaseTile[,] Map = new BaseTile[_m.GetLength(0), _m.GetLength(1)];
 
             for (int y = 0; y < _m.GetLength(1); y++)
                 for (int x = 0; x < _m.GetLength(0); x++)
-                    Map[x, y] = _m[y, x] == 1 ? new TileInfo
+                    switch (_m[y, x])
                     {
-                        Solid = true,
-                        DownAtlas = new Vector2i(0, 0),
-                        UpAtlas = new Vector2i(0, 0),
-                        LeftAtlas = new Vector2i(1, 0),
-                        RightAtlas = new Vector2i(1, 0)
-                    } :
-                    new TileInfo
-                    {
-                        Solid = false,
-                        DownAtlas = new Vector2i(0, 0),
-                        UpAtlas = new Vector2i(0, 0),
-                        LeftAtlas = new Vector2i(1, 0),
-                        RightAtlas = new Vector2i(1, 0),
-                        CeilAtlas = new Vector2i(0, 0),
-                        FloorAtlas = new Vector2i(2, 0)
-                    };
+                        case 1:
+                            Map[x, y] = new BaseTile
+                            {
+                                Solid = true,
+                                DownAtlas = new Vector2i(1, 0),
+                                UpAtlas = new Vector2i(1, 0),
+                                LeftAtlas = new Vector2i(1, 0),
+                                RightAtlas = new Vector2i(1, 0)
+                            };
+                            break;
 
-            window = new RenderWindow(new VideoMode(800, 600), "SFML window",Styles.Default);
+                        case 2:
+                            Map[x, y] = new CircleTile
+                            {
+                                Solid = true,
+                                DownAtlas = new Vector2i(1, 0),
+                                UpAtlas = new Vector2i(1, 0),
+                                LeftAtlas = new Vector2i(1, 0),
+                                RightAtlas = new Vector2i(1, 0),
+                                CeilAtlas = new Vector2i(0, 0),
+                                FloorAtlas = new Vector2i(2, 0)
+                            };
+                        break;
+
+                        default:
+                            Map[x, y] = new BaseTile
+                            {
+                                Solid = false,
+                                DownAtlas = new Vector2i(0, 0),
+                                UpAtlas = new Vector2i(0, 0),
+                                LeftAtlas = new Vector2i(1, 0),
+                                RightAtlas = new Vector2i(1, 0),
+                                CeilAtlas = new Vector2i(0, 0),
+                                FloorAtlas = new Vector2i(2, 0)
+                            };
+                            break;
+                    }
+
+
+                    window = new RenderWindow(new VideoMode(800,600,8), "SFML window", Styles.Default);
             window.SetVisible(true);
             window.Closed += new EventHandler(OnClosed);
             window.KeyPressed += new EventHandler<KeyEventArgs>(OnKeyPressed);
@@ -90,18 +113,18 @@ namespace SFMLTest
                 Map = Map
             };
 
-            Renderer ren = new Renderer(caster, rs, fov);
+            Renderer ren = new Renderer(caster,window, rs, fov);
             ren.Textures.Add(new Texture("Texture.png"));
             ren.MapAtlasInUse = 0;
             #endregion
 
             Vector2f player = new Vector2f(caster.CellSize * 6 + 8, caster.CellSize * 5 + 8);
-            Vector2f sp1 = player + new Vector2f(35, 15);
+            Vector2f sp1 = player + new Vector2f(70, 15);
             Vector2f sp2 = player + new Vector2f(50, 70);
 
             Vector2f sp3 = new Vector2f(caster.CellSize * 6 + 8, caster.CellSize * 5 + 8) + new Vector2f(30, -30);
-            Vector2f scen = new Vector2f(caster.CellSize * 6 + 8, caster.CellSize * 5 + 8) + new Vector2f(0, -30);
-
+            Vector2f scen = sp1 + new Vector2f(60,60);
+            
             Vector2f M;
 
             font = new Font("Perfect DOS VGA 437 Win.ttf");
@@ -110,20 +133,44 @@ namespace SFMLTest
             int fpsCounter = 0;
             int ticks = Environment.TickCount;
 
-            ren.LightMapScaler = 2;
-            ren.GenerateLightMap(
-                new List<Light>
+            var lamps = new List<Light>
                 {
                     new Light {
                         Position = new Vector2f(sp1.X,sp1.Y),
-                        Color = new Color(255,255,255)
+                        Color = new Color(0,255,0)
 
                     },
                     new Light {
-                        Position = new Vector2f(sp2.X,sp2.Y), 
+                        Position = new Vector2f(sp2.X,sp2.Y),
                         Color = new Color(255,0,255)
                     }
+                };
+
+            ren.LightMapScaler = 1f;
+            ren.GenerateLightMap(lamps);
+
+            List<Sprite> sprites = new List<Sprite>();
+            Random r = new Random();
+
+            for (int i = 0; i < 10; i++)
+                sprites.Add(new Sprite
+                {
+                    Atlas = new Vector2i(4, 0),
+                    Position = new Vector2f((float)r.NextDouble() * caster.CellSize*Map.GetLength(0), (float)r.NextDouble() * caster.CellSize * Map.GetLength(1))
                 });
+
+            sprites.Add(new Sprite
+            {
+                Atlas = new Vector2i(3, 0),
+                Position = sp2
+            });
+
+            Sprite p = new Sprite
+            {
+                Atlas = new Vector2i(3, 0),
+                Position = sp1
+            };
+            sprites.Add(p);
 
             while (window.IsOpen)
             {
@@ -174,67 +221,27 @@ namespace SFMLTest
 
                 player += M;
 
-                sp3 = RotateAround(sp3, scen, 2);
+                
 
                 Mouse.SetPosition(new Vector2i((int)window.Size.X / 2, (int)window.Size.Y / 2));
 
                 window.DispatchEvents();
                 rs.Clear(Color.Black);
 
-                ren.Render(player, angle, new List<RayCaster.Sprite>
-                {
-                    new RayCaster.Sprite
-                    {
-                        Atlas = new Vector2i(3,0),
-                        Position = sp1
-                    },
-                    new RayCaster.Sprite
-                    {
-                        Atlas = new Vector2i(3,0),
-                        Position = sp2
-                    },
-                     new RayCaster.Sprite
-                    {
-                        Atlas = new Vector2i(4,0),
-                        Position = sp3
-                    }
-                });
+
+                //lamps[0].Position = RotateAround(lamps[0].Position, scen, 3);
+                p.Position = lamps[0].Position;
+                ren.Render(player, angle, sprites,lamps);
                 t.DisplayedString = $"Fps: {fps}";
                 rs.Draw(t);
-
-                window.Draw(new Vertex[] {
-                    new Vertex
-                    {
-                        Position = new Vector2f(0,0),
-                        TexCoords = new Vector2f(0,screen.Y-1),
-                        Color = Color.White
-                    },
-                    new Vertex
-                    {
-                        Position = new Vector2f(0,window.Size.Y-1),
-                        TexCoords = new Vector2f(0,0),
-                        Color = Color.White
-                    },
-                    new Vertex
-                    {
-                        Position = new Vector2f(window.Size.X-1,window.Size.Y-1),
-                        TexCoords = new Vector2f(screen.X-1,0),
-                        Color = Color.White
-                    },
-                    new Vertex
-                    {
-                        Position = new Vector2f(window.Size.X-1,0),
-                        TexCoords = new Vector2f(screen.X-1,screen.Y-1),
-                        Color = Color.White
-                    },
-                }, 0, 4, PrimitiveType.Quads, new RenderStates(rs.Texture));
-
-                window.Display();
-                Thread.Sleep(1);
+                ren.ShowBuffer();
+                Thread.Sleep(0);
 
                 fpsCounter++;
             }
         }
+
+        //private void RenderMiniMap()
 
         private void Window_MouseMoved(object sender, MouseMoveEventArgs e)
         {

@@ -6,7 +6,9 @@ using System.Threading.Tasks;
 using SFML;
 using SFML.Graphics;
 using SFML.System;
-using static SFMLTest.Helpers;
+using SFMLTest.Tile;
+//using static SFMLTest.Helpers;
+using static MathFloat.MathF;
 
 namespace SFMLTest
 {
@@ -16,7 +18,7 @@ namespace SFMLTest
 
         #region Properties
         public int CellSize { get; set; }
-        public TileInfo[,] Map { get; set; }
+        public BaseTile[,] Map { get; set; }
         #endregion
 
         #region Clases
@@ -31,66 +33,48 @@ namespace SFMLTest
 
         public class RayResult
         {
+            public bool Valid { get; set; }
             public Vector2i Tile { get; set; }
             public Vector2f Position { get; set; }
             public Side Side { get; set; }
             public float Magnitude { get; set; }
         }
-
-        public class TileInfo
-        {
-            public bool Solid { get; set; }
-            public Vector2i UpAtlas { get; set; }
-            public Vector2i DownAtlas { get; set; }
-            public Vector2i LeftAtlas { get; set; }
-            public Vector2i RightAtlas { get; set; }
-            public Vector2i FloorAtlas { get; set; }
-            public Vector2i CeilAtlas { get; set; }
-        }
-
-        public class Sprite
-        {
-            public Vector2f Position { get; set; }
-            public Vector2i Atlas { get; set; }
-            public Color Light { get; set; }
-            public float Distance { get; set; }
-        }
-
-        public class Light
-        {
-            public Color Color { get; set; }
-            public Vector2f Position { get; set; }
-        }
         #endregion
 
         public static Vector2f RotateAround(Vector2f vector, Vector2f origin, float angle)
         {
+            angle *= Helpers.DegRad;
             vector -= origin;
             return new Vector2f(
-                CosD(angle) * vector.X - SinD(angle) * vector.Y, 
-                SinD(angle) * vector.X + CosD(angle) * vector.Y) 
+                Cos(angle) * vector.X - Sin(angle) * vector.Y, 
+                Sin(angle) * vector.X + Cos(angle) * vector.Y) 
                 + origin;
         }
 
         public static Vector2f Rotate(Vector2f vector, float angle)
         {
+            angle *= Helpers.DegRad;
             return new Vector2f(
-                CosD(angle) * vector.X - SinD(angle) * vector.Y,
-                SinD(angle) * vector.X + CosD(angle) * vector.Y);
+                Cos(angle) * vector.X - Sin(angle) * vector.Y,
+                Sin(angle) * vector.X + Cos(angle) * vector.Y);
         }
 
-        public TileInfo GetMap(int px, int py)
+        public BaseTile GetMap(int px, int py, Vector2i toIgnore = new Vector2i())
         {
+            if (px == toIgnore.X & py == toIgnore.Y)
+                return new BaseTile { Solid = false };
+
             if (px < 0 || px > Map.GetLength(0) - 1 || py < 0 || py > Map.GetLength(1) - 1)
-                return new TileInfo { Solid = true };
+                return new BaseTile { Solid = true };
             else
                 return Map[px, py];
         }
 
-        public RayResult RayCast(Vector2f O, float A)
+        private RayResult RayCastInternal(Vector2f O, Vector2f startO, float A, Vector2i toIgnore)
         {
-            Vector2f D = O + new Vector2f(CosD(A) * 1000, SinD(A) * 1000);
-            Vector2f Slope = D - O;
+            A *= Helpers.DegRad;
+            Vector2f D = startO + new Vector2f(Cos(A) * 1000, Sin(A) * 1000);
+            Vector2f Slope = D - startO;
             Vector2f Delta = new Vector2f();
             Vector2f Ph = new Vector2f(), Pv = new Vector2f();
             float Dh, Dv;
@@ -99,62 +83,62 @@ namespace SFMLTest
             //If Dx is zero, then there's no horizontal intersections
             if (Slope.X == 0)
             {
-                Ph = new Vector2f(O.X + MaxDistance, O.Y + MaxDistance);
+                Ph = new Vector2f(startO.X + MaxDistance, startO.Y + MaxDistance);
                 Dh = MaxDistance;
             }
             else
             {
                 Delta.X = CellSize * Math.Sign(Slope.X);
 
-                Ph.X = Floor(O.X / CellSize);
+                Ph.X = Floor(startO.X / CellSize);
                 Ph.X = (Ph.X + (Math.Sign(Delta.X) == 1 ? 1 : 0)) * CellSize;
 
                 if (Slope.Y == 0)
                 {
                     Delta.Y = 0;
-                    Ph.Y = O.Y;
+                    Ph.Y = startO.Y;
                 }
                 else
                 {
                     Delta.Y = (Delta.X * Slope.Y) / Slope.X;
-                    Ph.Y = O.Y + (Slope.Y * (Ph.X - O.X)) / Slope.X;
+                    Ph.Y = startO.Y + (Slope.Y * (Ph.X - startO.X)) / Slope.X;
                 }
 
-                while (!GetMap(Floor(Ph.X / CellSize) + (Delta.X < 0 ? -1 : 0), Floor(Ph.Y / CellSize)).Solid)
+                while (!GetMap(Helpers.Floor(Ph.X / CellSize) + (Delta.X < 0 ? -1 : 0), Helpers.Floor(Ph.Y / CellSize), toIgnore).Solid)
                     Ph += Delta;
 
-                Dh = (float)Math.Sqrt(Math.Pow((Ph.X - O.X), 2) + Math.Pow((Ph.Y - O.Y), 2));
+                Dh = Sqrt(Pow((Ph.X - O.X), 2) + Pow((Ph.Y - O.Y), 2));
             }
 
             //If Dy is zero, then there's no vertical intersections
             if (Slope.Y == 0)
             {
-                Pv = new Vector2f(O.X + MaxDistance, O.Y + MaxDistance);
+                Pv = new Vector2f(startO.X + MaxDistance, startO.Y + MaxDistance);
                 Dv = MaxDistance;
             }
             else
             {
                 Delta.Y = CellSize * Math.Sign(Slope.Y);
 
-                Pv.Y = Floor(O.Y / CellSize);
+                Pv.Y = Floor(startO.Y / CellSize);
                 Pv.Y = (Pv.Y + (Math.Sign(Delta.Y) == 1 ? 1 : 0)) * CellSize;
 
                 if (Slope.X == 0)
                 {
                     Delta.X = 0;
-                    Pv.X = O.X;
+                    Pv.X = startO.X;
                 }
                 else
                 {
                     Delta.X = (Delta.Y * Slope.X) / Slope.Y;
-                    Pv.X = O.X + (Slope.X * (Pv.Y - O.Y)) / Slope.Y;
+                    Pv.X = startO.X + (Slope.X * (Pv.Y - startO.Y)) / Slope.Y;
                 }
 
 
-                while (!GetMap(Floor(Pv.X / CellSize), Floor(Pv.Y / CellSize) + (Delta.Y < 0 ? -1 : 0)).Solid)
+                while (!GetMap(Helpers.Floor(Pv.X / CellSize), Helpers.Floor(Pv.Y / CellSize) + (Delta.Y < 0 ? -1 : 0), toIgnore).Solid)
                     Pv += Delta;
 
-                Dv = (float)Math.Sqrt(Math.Pow(Pv.X - O.X, 2) + Math.Pow(Pv.Y - O.Y, 2));
+                Dv = Sqrt(Pow(Pv.X - O.X, 2) + Pow(Pv.Y - O.Y, 2));
             }
 
 
@@ -162,7 +146,7 @@ namespace SFMLTest
             {
                 res = new RayResult
                 {
-                    Tile = new Vector2i(Floor(Ph.X / CellSize) + (Delta.X < 0 ? -1 : 0), Floor(Ph.Y / CellSize)),
+                    Tile = new Vector2i(Helpers.Floor(Ph.X / CellSize) + (Delta.X < 0 ? -1 : 0), Helpers.Floor(Ph.Y / CellSize)),
                     Position = Ph,
                     Magnitude = Dh,
                     Side = Slope.X < 0 ? Side.Left : Side.Right
@@ -174,7 +158,7 @@ namespace SFMLTest
             {
                 res = new RayResult
                 {
-                    Tile = new Vector2i(Floor(Pv.X / CellSize), Floor(Pv.Y / CellSize) + (Delta.Y < 0 ? -1 : 0)),
+                    Tile = new Vector2i(Helpers.Floor(Pv.X / CellSize), Helpers.Floor(Pv.Y / CellSize) + (Delta.Y < 0 ? -1 : 0)),
                     Position = Pv,
                     Magnitude = Dv,
                     Side = Slope.Y < 0 ? Side.Up : Side.Down
@@ -182,6 +166,25 @@ namespace SFMLTest
 
                 return res;
             }
+        }
+
+        public RayResult RayCast(Vector2f O, float A)
+        {
+            RayResult result;
+            Vector2f start = O;
+            Vector2i toIgnore = new Vector2i(300000,300000);
+            int fs = 0;
+
+            do
+            {
+                result = RayCastInternal(O,start,A, toIgnore);
+                result = GetMap(result.Tile.X, result.Tile.Y, toIgnore).OnIntersection(result, O, A, this);
+                start = result.Position;
+                toIgnore = result.Tile;
+            }
+            while (!result.Valid & fs++<15);
+
+            return result;
         }
     }
 }

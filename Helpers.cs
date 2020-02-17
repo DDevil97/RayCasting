@@ -24,5 +24,51 @@ namespace SFMLTest
         public static int Ceil(float N) => (int)Math.Ceiling(N);
         public static int Round(float N) => (int)Math.Round(N);
         public static T Clamp<T>(dynamic num, dynamic bottom, dynamic top) => (num < bottom) ? (T)bottom : (num > top) ? (T)top : (T)num;
+
+        // Find the points of intersection.
+        public static int LineCircleIntersections(float cx, float cy, float radius,
+                                                  Vector2f point1, Vector2f point2,
+                                                  out Vector2f intersection1, out Vector2f intersection2)
+        {
+            float dx, dy, A, B, C, det, t;
+
+            dx = point2.X - point1.X;
+            dy = point2.Y - point1.Y;
+
+            A = dx * dx + dy * dy;
+            B = 2 * (dx * (point1.X - cx) + dy * (point1.Y - cy));
+            C = (point1.X - cx) * (point1.X - cx) +
+                (point1.Y - cy) * (point1.Y - cy) -
+                radius * radius;
+
+            det = B * B - 4 * A * C;
+            if ((A <= 0.0000000001) || (det < 0))
+            {
+                // No real solutions.
+                intersection1 = new Vector2f(float.NaN, float.NaN);
+                intersection2 = new Vector2f(float.NaN, float.NaN);
+                return 0;
+            }
+            else if (det == 0)
+            {
+                // One solution.
+                t = -B / (2 * A);
+                intersection1 =
+                    new Vector2f(point1.X + t * dx, point1.Y + t * dy);
+                intersection2 = new Vector2f(float.NaN, float.NaN);
+                return 1;
+            }
+            else
+            {
+                // Two solutions.
+                t = (float)((-B + Math.Sqrt(det)) / (2 * A));
+                intersection1 =
+                    new Vector2f(point1.X + t * dx, point1.Y + t * dy);
+                t = (float)((-B - Math.Sqrt(det)) / (2 * A));
+                intersection2 =
+                    new Vector2f(point1.X + t * dx, point1.Y + t * dy);
+                return 2;
+            }
+        }
     }
 }
