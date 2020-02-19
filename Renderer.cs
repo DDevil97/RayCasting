@@ -116,9 +116,9 @@ namespace SFMLTest
             Textures = new List<Texture>();
             DepthPerStrip = new float[Buffer.Size.X];
             AtlasTileSize = new Vector2f(Caster.CellSize, Caster.CellSize);
-            AmbientLight = new Color(32, 32, 32);
+            AmbientLight = new Color(8, 8, 8);
             Angles = new float[Buffer.Size.X];
-            LightMultiplier = 800;
+            LightMultiplier = 1024;
 
             for (int x = 0; x < Buffer.Size.X; x++)
                 Angles[x] = AtanD((x - Buffer.Size.X / 2.0f) / DistanceToProjectionPlane);

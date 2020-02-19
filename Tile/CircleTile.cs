@@ -55,7 +55,8 @@ namespace SFMLTest.Tile
                              caster.CellSize * original.Tile.X + (caster.CellSize / 2) - original.Position.X) + (float)Math.PI;
 
             tx = (float)((tx * caster.CellSize) / (Math.PI * 2));
-
+            tx *= 4;
+            tx %= (float)(Math.PI * 2);
             Vector2f top = new Vector2f(
                         DownAtlas.X * caster.CellSize + tx,
                         DownAtlas.Y * caster.CellSize);

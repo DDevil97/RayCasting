@@ -255,3 +255,4 @@ C:\Users\LENOVO\Documents\RayCaster\obj\Debug\SFMLTest.csproj.CopyComplete
 C:\Users\LENOVO\Documents\RayCaster\obj\Debug\SFMLTest.exe
 C:\Users\LENOVO\Documents\RayCaster\obj\Debug\SFMLTest.pdb
 C:\Users\LENOVO\Documents\RayCaster\bin\Debug\MathFloat.dll
+C:\NProjects\CosaFea\RayCasting\bin\Debug\MathFloat.dll

@@ -40,10 +40,10 @@ namespace SFMLTest
         {1,0,1,0,0,2,0,2,0,0,0,0,0,0,0,1},
         {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
         {1,0,1,0,0,2,0,0,0,0,0,0,0,0,0,1},
-        {1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1},
-        {1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1},
-        {1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1},
-        {1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1},
+        {1,0,1,0,0,0,5,5,5,5,0,0,0,0,0,1},
+        {1,0,1,0,0,0,5,5,5,5,0,0,0,0,0,1},
+        {1,0,1,0,0,0,5,5,5,5,0,0,0,0,0,1},
+        {1,0,1,0,0,0,5,5,5,5,0,0,0,0,0,1},
         {1,1,1,0,0,0,0,1,1,0,1,1,1,0,1,1},
         {1,0,0,0,0,2,0,1,0,0,1,0,0,0,0,1},
         {1,0,0,0,0,0,0,1,0,0,1,0,0,0,0,1},
@@ -84,7 +84,19 @@ namespace SFMLTest
                                 FloorAtlas = new Vector2i(2, 0)
                             };
                         break;
-
+                        case 5:
+                            Map[x, y] = new BaseTile
+                            {
+                                Solid = false,
+                                DownAtlas = new Vector2i(0, 0),
+                                UpAtlas = new Vector2i(0, 0),
+                                LeftAtlas = new Vector2i(1, 0),
+                                RightAtlas = new Vector2i(1, 0),
+                                CeilAtlas = new Vector2i(0, 0),
+                                FloorAtlas = new Vector2i(5, 0)
+                            };
+                            break;
+                            break;
                         default:
                             Map[x, y] = new BaseTile
                             {
@@ -137,12 +149,12 @@ namespace SFMLTest
                 {
                     new Light {
                         Position = new Vector2f(sp1.X,sp1.Y),
-                        Color = new Color(0,255,0)
+                        Color = new Color(255,255,255)
 
                     },
                     new Light {
                         Position = new Vector2f(sp2.X,sp2.Y),
-                        Color = new Color(255,0,255)
+                        Color = new Color(128,128,0)
                     }
                 };
 
@@ -229,7 +241,7 @@ namespace SFMLTest
                 rs.Clear(Color.Black);
 
 
-                //lamps[0].Position = RotateAround(lamps[0].Position, scen, 3);
+                //lamps[0].Position = player;
                 p.Position = lamps[0].Position;
                 ren.Render(player, angle, sprites,lamps);
                 t.DisplayedString = $"Fps: {fps}";
