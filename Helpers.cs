@@ -1,4 +1,5 @@
-﻿using SFML.System;
+﻿using SFML.Graphics;
+using SFML.System;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,6 +25,25 @@ namespace SFMLTest
         public static int Ceil(float N) => (int)Math.Ceiling(N);
         public static int Round(float N) => (int)Math.Round(N);
         public static T Clamp<T>(dynamic num, dynamic bottom, dynamic top) => (num < bottom) ? (T)bottom : (num > top) ? (T)top : (T)num;
+        public static byte Clamp(float num) => (byte)((num < 0) ? 0 : (num > 255) ? 255 : num);
+        public static int Clamp(int num, int from, int to) => (num < from) ? from : (num > to) ? to : num;
+
+        public static Color ColorAdd(Color lhs, Color rhs)
+        {
+            int r = lhs.R + rhs.R;
+            if (r > 255)
+                r = 255;
+
+            int g = lhs.G + rhs.G;
+            if (g > 255)
+                g = 255;
+
+            int b = lhs.B + rhs.B;
+            if (b > 255)
+                b = 255;
+
+            return new Color(Clamp(r),Clamp(g),Clamp(b));
+        }
 
         // Find the points of intersection.
         public static int LineCircleIntersections(float cx, float cy, float radius,
